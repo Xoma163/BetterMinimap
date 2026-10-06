@@ -1,0 +1,10 @@
+bin/
+obj/
+artifacts/
+*.user
+local.props
+.vs/
+.idea/
+*.cfg
+*.cfg.zoom
+*.log

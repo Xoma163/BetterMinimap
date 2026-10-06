@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../src/MapMath.cs" Link="MapMath.cs" />
+    <Compile Include="../src/ShipZoomMemory.cs" Link="ShipZoomMemory.cs" />
+    <Compile Include="../src/ZoomMemoryStore.cs" Link="ZoomMemoryStore.cs" />
+    <Compile Include="../src/SmoothZoom.cs" Link="SmoothZoom.cs" />
+    <Compile Include="../src/SettingsText.cs" Link="SettingsText.cs" />
+    <Compile Include="../src/ResetPreset.cs" Link="ResetPreset.cs" />
+  </ItemGroup>
+</Project>
