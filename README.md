@@ -6,6 +6,8 @@
 
 ## Features
 
+**Two supported UI languages: English and Russian.** Russian is selected automatically when the game language is Russian; English is used otherwise.
+
 - **Orientation:** follow the camera, follow the character, or keep north up. Icons and compass letters remain readable.
 - **Shape and size:** circular or square, 50–150%. Status effects move left when the map is enlarged.
 - **Zoom:** smooth transitions, configurable limits and shortcuts. Custom zoom levels are anchored at ×1, so reaching a limit does not shift the scale.
@@ -16,6 +18,17 @@
 - **Settings:** English, or Russian when the game language is Russian. Optional integration with StoreAndCraft's mod settings window.
 
 The large **M** map, world lighting, exploration data, networking and world saves are not modified. **Install on the client, not on the server.**
+
+## Screenshots
+
+### Circular minimap
+![Circular minimap](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/circular.jpg)
+
+### Square minimap
+![Square minimap](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/square.jpg)
+
+### Ship zoom
+![Minimap with separate ship zoom](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/ship-zoom.jpg)
 
 ## Requirements and installation
 
@@ -108,6 +121,8 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 
 ### Возможности
 
+**Поддерживаются два языка интерфейса: русский и английский.** При русском языке игры автоматически выбирается русский, при остальных — английский.
+
 - Вращение по камере, персонажу или север сверху; читаемые значки и буквы компаса.
 - Круглая/квадратная форма и размер 50–150%. При увеличении карты бафы сдвигаются влево.
 - Плавный зум, свои клавиши и пределы. Ступени привязаны к ×1 и не смещаются после достижения Min/Max.
@@ -118,6 +133,20 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 - Русские настройки при русском языке игры, английские — при остальных.
 
 Большая карта **M**, освещение мира, исследование, сеть и сохранения мира не изменяются. **На сервер мод устанавливать не нужно.**
+
+### Скриншоты
+
+**Круглая мини-карта**
+
+![Круглая мини-карта](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/circular.jpg)
+
+**Квадратная мини-карта**
+
+![Квадратная мини-карта](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/square.jpg)
+
+**Карта в режиме корабля**
+
+![Карта в режиме корабля](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/ship-zoom.jpg)
 
 ### Установка
 
