@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1
+
+- Added circular, square and ship-zoom screenshots to the README.
+- Highlighted English and Russian UI support.
+- No gameplay changes.
+
+Добавлены скриншоты круглой, квадратной карты и корабельного зума в README.
+Отдельно отмечена поддержка русского и английского интерфейса.
+Игровая логика не изменена.
+
 ## 1.0.0
 
 First public release.
