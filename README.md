@@ -4,6 +4,19 @@
 
 [Releases](https://github.com/Xoma163/BetterMinimap/releases) · [Report a bug](https://github.com/Xoma163/BetterMinimap/issues) · [Русский](#русский)
 
+## What's new in 1.1.0
+
+Changes since **1.0.1**:
+
+- Replaced separate biome/wind positions with **four configurable HUD slots**: two above and two below the map. Defaults: Empty / Biome / Wind / Empty. Wind is centered, empty rows collapse, and the HUD block stays within the screen where space permits. Biome text and wind retain their native sizes.
+- Added **X/Y/Z coordinates** as slot content: font size **9**, black **3-pixel outline**, no separate visibility switch.
+- Added **Show minimap** in General (On by default), without blocking the large **M** map.
+- Added **session-only waypoints**: Shift+left-click anywhere on the large map to set/move a target; Shift+right-click to clear without deleting pins. Gold markers, an off-screen direction arrow, horizontal distance and a distance-bearing selection confirmation.
+- Added **blue edge arrows for player pings** that do not fit on the minimap. Nearby pings keep their native rings and all pings retain their normal lifetime.
+- Added **other players' nicknames** close below their icons; your own name is hidden. New Players settings: visibility, font size **4–20** (default **8**) and optional **2-pixel outline**. Only players sharing their position are labeled.
+- Added a **single thin brown map border**, without an extra black outer band, for both map shapes.
+- Updated English/Russian settings, presets and migration of old HUD settings; expanded automated checks and replaced the old screenshot gallery with **one current reference image**.
+
 ## Features
 
 **Two supported UI languages: English and Russian.** Russian is selected automatically when the game language is Russian; English is used otherwise.
@@ -13,22 +26,21 @@
 - **Zoom:** smooth transitions, configurable limits and shortcuts. Custom zoom levels are anchored at ×1, so reaching a limit does not shift the scale.
 - **Ship zoom:** separate land/ship magnifications, shared by worlds and characters in the same profile and saved between game sessions. Works for passengers too.
 - **Compass:** independently toggle letters and lines; choose solid/dashed lines, color and thickness.
-- **HUD layout:** place the biome label above/below the map and the wind arrow at an outside corner or top/bottom center. External outlines improve readability.
+- **HUD slots:** two centered slots above the minimap and two below. Assign biome, wind, coordinates or nothing to each slot. External outlines improve readability.
+- **Coordinates:** compact X/Y/Z coordinates in meters. Select Coordinates in any HUD slot to show them; there is no separate switch.
+- **Waypoint:** Shift+left-click anywhere on the large map to set a target; Shift+right-click to clear. The minimap shows the target and horizontal distance, with an edge arrow when it is off-screen.
+- **Edge pings:** pings that do not fit on the minimap become blue directional arrows at its edge until the native ping expires. Fully visible pings keep their normal ring icons.
+- **Visibility:** General → Show minimap hides the small map and its entire HUD block; the large M map remains available.
+- **Border:** a single thin brown outline follows the circular or square map edge, without a dark outer band.
+- **Player names:** horizontal nicknames close below other players' icons, for players sharing their position. Your own name is hidden. Font size 4–20 (default 8) and an optional outline, independent of coordinates and biome text.
 - **Lighting:** follow time of day, always day, or always night. Only the minimap material is changed.
 - **Settings:** English, or Russian when the game language is Russian. Optional integration with StoreAndCraft's mod settings window.
 
-The large **M** map, world lighting, exploration data, networking and world saves are not modified. **Install on the client, not on the server.**
+The large **M** map keeps its normal controls; Shift+left/right-click and a temporary waypoint marker are added for navigation. World lighting, exploration data, networking and world saves are not modified. **Install on the client, not on the server.**
 
-## Screenshots
+## Screenshot
 
-### Circular minimap
-![Circular minimap](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/circular.jpg)
-
-### Square minimap
-![Square minimap](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/square.jpg)
-
-### Ship zoom
-![Minimap with separate ship zoom](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/ship-zoom.jpg)
+![Better Minimap — референс мини-карты](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/reference.png)
 
 ## Requirements and installation
 
@@ -46,14 +58,18 @@ Do not install the old **Shtab Rotating Minimap** DLL alongside Better Minimap. 
 
 In StoreAndCraft's mod settings window (usually **F10**), choose **Better Minimap**. Changes apply after **Save**; closing or going back without saving discards them. Other configuration managers are not modified by our localization integration.
 
-Sections: **1. General → 2. Map → 3. Zoom → 4. Shortcuts → 5. Compass**.
+Sections: **1. General → 2. Map → 3. Zoom → 4. Shortcuts → 5. Compass → 6. HUD → 7. Navigation → 8. Players**.
 
 | Setting | Mod default |
 | --- | --- |
 | Enable mod | On |
+| Show minimap | On |
 | Rotation | Camera up |
 | Shape / size | Circle / 130% |
-| Biome / wind | Above / bottom center |
+| Slots 1 / 2 / 3 / 4 | Empty / biome / wind / empty |
+| Coordinates | Not assigned to a slot |
+| Target indicator | On; no target selected |
+| Player names / font size / outline | On / 8 / on (2 pixels) |
 | Lighting | Time of day |
 | Min / Max zoom | ×0.1 / ×4 |
 | Custom zoom step | ×1.5 |
@@ -63,14 +79,33 @@ Sections: **1. General → 2. Map → 3. Zoom → 4. Shortcuts → 5. Compass**.
 | Line style / thickness / color | Dashed / 0.8 / `#505050BB` |
 
 - **Enable mod:** switches off all mod features without losing settings. The settings window remains available.
-- **Reset to Vanilla:** stages a vanilla-like preset: square, 100%, north up, default biome/wind positions, daytime lighting, Min 0 / Max 1, and custom rotation, zoom keys, smoothing, ship zoom and compass disabled. It is only a preset, not a locked mode. Automatic outlines and the zoom indicator remain while the mod is enabled. Use the master switch for a completely unmodified minimap.
+- **Show minimap** (General): hides the small map, slots, compass and overlays without disabling the mod or the large M map. Enabled by default; both reset presets restore it to On. The master mod switch takes precedence and restores the native map when disabled.
+- **Reset to Vanilla:** stages a vanilla-like preset: square, 100%, north up, daytime lighting, Min 0 / Max 1, and custom rotation, zoom keys, smoothing, ship zoom, compass, coordinates and target indicator disabled. It is only a preset, not a locked mode. The default slot layout, outlines and zoom indicator remain while the mod is enabled. Use the master switch for a completely unmodified minimap, including its original biome/wind positions.
 - **Reset to mod default:** stages the defaults in the table. **Neither reset changes the master enable switch**, including an unsaved manual change to it.
 - Both resets apply after Save and reset saved land/ship zoom to ×1, subject to the selected limits. If the mod is disabled, the zoom reset waits until it is manually enabled.
 - **Min zoom = 0** removes the custom far limit, but not the technical whole-map limit. If Min exceeds Max, the bounds are swapped internally. Only the small map is affected.
 - The configurable zoom step applies to this mod's keys; native game keys retain their own step and respect the limits. Shift+Equals and Shift+Minus work with the default bindings.
 - The selected zoom is shown below the map for two seconds after a change. On a ship, the label identifies ship zoom.
 - Line thickness is **0.1–3.0**. Colors use `#RRGGBB` or `#RRGGBBAA`.
-- Outside labels/arrows need screen space. Large HUD sizes and top-center combinations may extend beyond the screen; choose a different position or size if necessary.
+- The HUD block shifts vertically when needed to keep its slots on-screen. If the entire block is taller than the viewport, reduce the HUD/minimap size.
+
+### HUD slots and navigation
+
+```text
+Slot 1  (empty)
+Slot 2  (biome)
+[ minimap ]
+Slot 3  (wind)
+Slot 4  (empty)
+```
+
+Each slot offers **Empty / Biome / Wind / Coordinates**. Elements can be repeated. Empty slots take no space; filled slots use compact spacing. The biome font and wind arrow retain their native sizes; the biome row reserves enough height for its actual font metrics. Select **Coordinates** to immediately show X/Y/Z with a 9-unit font and a 3-pixel outline; select **Empty** to hide them. Y is the player's world height. There is no separate coordinate toggle. The temporary zoom label appears below the last visible lower slot.
+
+**Players:** names are enabled by default, with font size **8** (range **4–20**) and a **2-pixel** outline. Change these independently in **8. Players**. Names stay horizontal and close below the visible icon, discounting the sprite's transparent margins, and clip at the minimap boundary. Only the game's existing other public-position players are labeled; your own name is hidden and private player locations are not discovered. The large map is unchanged. The vanilla-like preset disables these labels. Existing saved font sizes are retained within the new bounds; select 8 manually to adopt the new default in an existing profile.
+
+With **Target indicator** enabled, open **M** and **Shift+left-click any point**, including empty map space, to set or move a waypoint. A gold diamond shows the selected point on the large map and minimap; an edge arrow indicates an off-screen minimap target. Distance is measured horizontally in meters. **Shift+right-click** the large map to clear the waypoint without deleting a pin below the cursor. Ordinary clicks, pin checking, deletion and double-click creation retain their native behavior; the waypoint gestures do not modify pins. Selection is local to this session and clears when the feature/mod is disabled or the minimap is recreated. It is not saved or shared with other players.
+
+Selecting a waypoint displays a confirmation such as **Target selected (350 m)** with rounded horizontal distance. Player ping rings that would cross the minimap border become blue arrows of the same shape as the gold waypoint arrow, following map rotation and shape. Fully visible pings remain native; edge indicators disappear with the game's ping lifetime and do not create extra network messages.
 
 ### Configuration and zoom memory
 
@@ -80,7 +115,7 @@ Close the game before manually editing:
 BepInEx/config/net.shtab.rotatingminimap.cfg
 ```
 
-Stable config keys retain their historical Russian names; localized labels are presentation only. Existing settings are preserved on update and older sections are migrated.
+Stable config keys retain their historical Russian names; localized labels are presentation only. Existing settings are preserved on update and older sections are migrated. Old biome/wind positions migrate into slots; corner wind positions become centered on the same side. Explicitly saved slot settings take precedence. On upgrade from the 1.1.0 test build, coordinate slots that were disabled by its old switch become Empty; enabled coordinate slots are preserved. The obsolete switch is removed.
 
 Separate land/ship magnifications are saved automatically in:
 
@@ -105,7 +140,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1
 Output: `bin/Release/net48/BetterMinimap.dll`; installable ZIP: `artifacts/`.
 Packaging uses Windows PowerShell/System.Drawing. A private `local.props` may supply local reference paths and is ignored by Git.
 
-Automated checks cover geometry, zoom levels and transitions, presets, localization strings and zoom-memory file I/O. **They do not launch Unity or replace in-game testing** of UI, clipping, lighting, resolution changes or compatibility. Report bugs with game/mod versions, reproduction steps and screenshots; remove private data from any attached logs/configs.
+Automated checks cover geometry, target clamping, slot spacing/migration, viewport fitting, zoom levels and transitions, presets, localization strings and zoom-memory file I/O. **They do not launch Unity or replace in-game testing** of UI, input, clipping, lighting, resolution changes or compatibility. See [the manual test checklist](docs/testing-hud-navigation.md). Report bugs with game/mod versions, reproduction steps and screenshots; remove private data from any attached logs/configs.
 
 ## License and acknowledgements
 
@@ -119,6 +154,19 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 
 **Better Minimap — клиентский мод мини-карты Valheim от AndrewSha.**
 
+### Что изменилось в 1.1.0
+
+По сравнению с **1.0.1**:
+
+- Вместо отдельных положений биома и ветра — **четыре настраиваемых слота**: два над картой и два под ней. По умолчанию: Пусто / Биом / Ветер / Пусто. Ветер по центру, пустые строки не занимают место, блок HUD удерживается в пределах экрана, если хватает места. Размеры биома и стрелки ветра остались штатными.
+- Добавлены **координаты X/Y/Z** как содержимое слота: шрифт **9**, чёрная обводка **3 пикселя**, без отдельного переключателя показа.
+- В «Общее» добавлен переключатель **«Показывать мини-карту»** (по умолчанию включён). Большая карта **M** остаётся доступной.
+- Добавлена **цель на текущий сеанс**: Shift+ЛКМ по любой точке большой карты задаёт/переносит цель, Shift+ПКМ снимает её без удаления меток. Золотые маркеры, стрелка направления для далёкой цели, расстояние по горизонтали и подтверждение выбора с расстоянием.
+- Пинги игроков, которые не помещаются на мини-карте, показываются **синими стрелками у края**. Ближние пинги сохраняют штатные кольца; время жизни пингов не меняется.
+- Добавлены **никнеймы других игроков** близко под иконками; своё имя скрыто. В разделе «Игроки» — показ, размер шрифта **4–20** (по умолчанию **8**) и отключаемая обводка **2 пикселя**. Подписываются только игроки с открытой позицией.
+- Добавлена **тонкая коричневая рамка** для обеих форм карты, без дополнительной чёрной обводки снаружи.
+- Обновлены RU/EN-настройки, пресеты и перенос старых настроек HUD; расширены автоматические проверки. Вместо прежней галереи оставлен **один актуальный скриншот-референс**.
+
 ### Возможности
 
 **Поддерживаются два языка интерфейса: русский и английский.** При русском языке игры автоматически выбирается русский, при остальных — английский.
@@ -128,25 +176,21 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 - Плавный зум, свои клавиши и пределы. Ступени привязаны к ×1 и не смещаются после достижения Min/Max.
 - Отдельные масштабы суши и корабля с сохранением между запусками игры, в том числе для пассажиров.
 - Независимые линии и буквы компаса; цвет, толщина и сплошной/пунктирный тип линий.
-- Положение биома сверху/снизу, стрелки ветра — снаружи по углам или по центру сверху/снизу. Внешние обводки.
+- Четыре слота: два над мини-картой и два под ней. В каждом — биом, ветер, координаты или пусто. Ветер только по центру; внешние обводки.
+- Координаты X/Y/Z в метрах, уменьшенный шрифт. Появляются при выборе «Координаты» в любом слоте, без отдельного переключателя.
+- Shift+ЛКМ по любой точке большой карты — указать цель, Shift+ПКМ — снять. На мини-карте — указатель, расстояние и стрелка у края для далёкой цели.
+- Не помещающиеся на мини-карте пинги игроков заменяются синими стрелками у края до истечения штатного времени пинга.
+- «Общее → Показывать мини-карту» скрывает мини-карту и весь её блок; большая карта M остаётся доступной.
+- Тонкая коричневая рамка по контуру круглой/квадратной карты, без дополнительного тёмного слоя снаружи.
+- Никнеймы близко под иконками других игроков с открытой позицией; своё имя скрыто. Размер шрифта 4–20 (по умолчанию 8) и отдельный переключатель обводки.
 - Освещение мини-карты: по времени суток, всегда день или всегда ночь.
 - Русские настройки при русском языке игры, английские — при остальных.
 
-Большая карта **M**, освещение мира, исследование, сеть и сохранения мира не изменяются. **На сервер мод устанавливать не нужно.**
+Обычное управление большой картой **M** не меняется; добавлены Shift+ЛКМ/ПКМ и временный маркер цели. Освещение мира, исследование, сеть и сохранения мира не изменяются. **На сервер мод устанавливать не нужно.**
 
-### Скриншоты
+### Скриншот
 
-**Круглая мини-карта**
-
-![Круглая мини-карта](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/circular.jpg)
-
-**Квадратная мини-карта**
-
-![Квадратная мини-карта](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/square.jpg)
-
-**Карта в режиме корабля**
-
-![Карта в режиме корабля](https://raw.githubusercontent.com/Xoma163/BetterMinimap/main/docs/images/ship-zoom.jpg)
+[Референс мини-карты — выше](#screenshot).
 
 ### Установка
 
@@ -160,21 +204,32 @@ StoreAndCraft необязателен; его окно модов (обычно
 
 ### Настройки
 
-Разделы: **1. Общее → 2. Карта → 3. Зум → 4. Клавиши → 5. Компас**. В окне StoreAndCraft изменения действуют после **Сохранить**. Закрытие или возврат назад без сохранения отменяет изменения.
+Разделы: **1. Общее → 2. Карта → 3. Зум → 4. Клавиши → 5. Компас → 6. HUD → 7. Навигация → 8. Игроки**. В окне StoreAndCraft изменения действуют после **Сохранить**. Закрытие или возврат назад без сохранения отменяет изменения.
 
-По умолчанию: мод включён, вращение по камере, **круглая карта 130%**, биом сверху, ветер снизу по центру, освещение по времени суток. Зум **×0,1–×4**, шаг **×1,5**, плавность и отдельный зум корабля включены. Клавиши `= / −` и NumPad `+ / −`. Буквы компаса включены, линии выключены; линии — пунктир, толщина **0,8**, цвет **`#505050BB`**.
+По умолчанию: мод включён, вращение по камере, **круглая карта 130%**, Slot 1 пустой, биом в Slot 2, ветер в Slot 3, Slot 4 пустой, освещение по времени суток. Указатель цели включён, но цель не выбрана. Зум **×0,1–×4**, шаг **×1,5**, плавность и отдельный зум корабля включены. Клавиши `= / −` и NumPad `+ / −`. Буквы компаса включены, линии выключены; линии — пунктир, толщина **0,8**, цвет **`#505050BB`**.
 
 - **Мод включён** — общий выключатель всех функций с сохранением настроек и доступа к F10.
-- **Сбросить к настройкам игры** — обычный пресет: квадрат 100%, север сверху, штатные положения биома/ветра, дневное освещение, Min 0 / Max 1. Вращение, дополнительные клавиши, плавность, отдельный зум корабля и компас выключены. Обводки и индикатор остаются, пока мод включён; полностью штатную карту возвращает общий выключатель.
+- **Показывать мини-карту** (раздел «Общее») — скрывает мини-карту, слоты, компас и указатели, но не отключает мод и большую карту M. По умолчанию включено; оба пресета возвращают значение «Включено». Общий выключатель мода имеет приоритет: при выключенном моде возвращается штатная карта.
+- **Сбросить к настройкам игры** — обычный пресет: квадрат 100%, север сверху, дневное освещение, Min 0 / Max 1. Вращение, дополнительные клавиши, плавность, отдельный зум корабля, компас, координаты и указатель цели выключены. Стандартная раскладка слотов, обводки и индикатор зума остаются; полностью штатную карту с исходными положениями биома/ветра возвращает общий выключатель.
 - **Сбросить к настройкам мода** — дефолты выше. **Ни один пресет не меняет общий выключатель**, включая несохранённый ручной выбор.
 - Сбросы применяются после Save и возвращают память масштабов к ×1 с учётом пределов. При выключенном моде сброс масштаба ждёт его ручного включения.
 - **Min = 0** снимает пользовательский предел отдаления, но не техническую границу всей карты. При Min > Max пределы внутренне меняются местами.
 - Настроенная кратность действует для клавиш мода; штатные клавиши игры сохраняют свой шаг, но учитывают Min/Max. Работают `Shift+=` и `Shift+−`.
 - Индикатор автоматически появляется на две секунды после изменения масштаба. На корабле подпись указывает корабельный зум.
 - Толщина линий — **0,1–3**, цвет — `#RRGGBB` или `#RRGGBBAA`.
-- Элементам снаружи карты нужно место. При большом размере HUD и комбинациях сверху они могут выйти за экран — измените положение или размер.
+- Блок автоматически сдвигается по вертикали, чтобы слоты не выходили за экран. Если он целиком выше доступного пространства, уменьшите размер HUD/мини-карты.
 
-Конфиг: `BepInEx/config/net.shtab.rotatingminimap.cfg`. Редактировать вручную при закрытой игре. При обновлении выбранные значения сохраняются, старые разделы мигрируют.
+**Слоты:** порядок сверху вниз — Slot 1, Slot 2, мини-карта, Slot 3, Slot 4. Для каждого доступно «Пусто / Биом / Ветер / Координаты»; элементы можно повторять. Пустые слоты не занимают место, отступы компактные. Шрифт биома и размер стрелки ветра остаются штатными; высота строки биома учитывает реальные размеры текста. Выбор «Координаты» сразу показывает X/Y/Z шрифтом 9 единиц с обводкой 3 пикселя; Y — высота игрока в мире. Отдельного переключателя нет. Индикатор зума появляется ниже последнего видимого нижнего слота.
+
+**Никнеймы:** раздел **8. Игроки** — «Показывать никнеймы», «Размер шрифта никнеймов» (**4–20**) и «Обводка никнеймов». По умолчанию включены, размер **8**, обводка **2 пикселя** включена. Текст находится близко под видимой иконкой, без лишнего отступа от прозрачных полей спрайта, и не вращается вместе с картой; у края карты обрезается по её форме. Подписываются только другие игроки, которые делятся позицией; своё имя скрыто. Большая карта и скрытые позиции игроков не меняются. Пресет настроек игры выключает подписи. Ранее сохранённый размер шрифта сохраняется в новых пределах; чтобы использовать новый дефолт в старом профиле, выберите 8 вручную.
+
+**Цель:** откройте M, нажмите Shift+ЛКМ по любой точке, в том числе пустому месту. Повторный Shift+ЛКМ переносит цель. На большой и мини-карте точка обозначается золотым ромбом, за пределами мини-карты — стрелкой; рядом расстояние по горизонтали в метрах. Shift+ПКМ снимает цель и не удаляет метки под курсором. Эти жесты не меняют обычные метки. Выбор не сохраняется в мир и не передаётся другим игрокам; сбрасывается при выключении функции/мода или пересоздании мини-карты.
+
+При выборе цели появляется подтверждение вида **«Цель выбрана (350 м)»** с округлённым расстоянием по горизонтали.
+
+**Пинги:** если круг пинга не помещается на мини-карте, у края появляется синяя стрелка такой же формы, как у жёлтой цели, с учётом формы карты и вращения. Полностью видимые пинги остаются штатными; стрелка исчезает вместе с пингом, не продлевая его время и не отправляя новых сообщений.
+
+Конфиг: `BepInEx/config/net.shtab.rotatingminimap.cfg`. Редактировать вручную при закрытой игре. При обновлении выбранные значения сохраняются, старые разделы мигрируют. Старые положения биома/ветра переносятся в слоты; угловой ветер становится центральным на той же стороне. Уже сохранённые настройки слотов имеют приоритет. При обновлении с тестовой 1.1.0 скрытые старым переключателем координаты становятся пустыми слотами, включённые сохраняются. Устаревший переключатель удаляется.
 
 Память масштабов: `BepInEx/config/net.shtab.rotatingminimap.cfg.zoom`. Записывается автоматически; общая для миров, персонажей и кораблей внутри профиля. При первом включении без памяти оба масштаба берутся из текущего; настройте корабельный масштаб после посадки. При следующих входах восстанавливается подходящее значение с учётом Min/Max.
 

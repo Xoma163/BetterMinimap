@@ -182,8 +182,8 @@ Near(smooth.Advance(0, false), .1); // disabling snaps to the selected target
 smooth.Reset(.01);
 Near(smooth.Target, .01);
 Near(smooth.Advance(1, true), .01);
-foreach (string key in new[] { "Мод включён", "Вращение", "Режим", "Форма", "Размер мини-карты", "Положение биома",
-    "Положение ветра", "Min zoom", "Max zoom", "Шаг зума", "Сохранять отдельный зум для кораблей",
+foreach (string key in new[] { "Мод включён", "Показывать мини-карту", "Вращение", "Режим", "Форма", "Размер мини-карты",
+    "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Указатель цели", "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов", "Min zoom", "Max zoom", "Шаг зума", "Сохранять отдельный зум для кораблей",
     "Плавный зум", "Зум через + и -", "Приблизить", "Отдалить", "Показывать линии компаса",
     "Показывать направления", "Тип линии", "Цвет линии", "Толщина линии", "Освещение карты" })
 {
@@ -213,22 +213,22 @@ for (int i = 0; i <= 1000; i++)
     Near(light, MapMath.Daylight(time + 1));
     Near(light, MapMath.Daylight(1 - time));
 }
-Check(SettingsText.Choice("BiomePosition", "Above", true) == "Сверху");
-Check(SettingsText.Choice("WindPosition", "BottomLeft", false) == "Bottom left");
+Check(SettingsText.Choice("HudSlotContent", "Biome", true) == "Биом");
+Check(SettingsText.Choice("HudSlotContent", "Coordinates", false) == "Coordinates");
 Check(SettingsText.PanelText("Save", true) == "Сохранить");
 Check(SettingsText.PanelText("Save", false) == "Save");
 Check(SettingsText.Name("unknown", false) == "unknown");
 Check(SettingsText.Description("unknown", false, "fallback") == "fallback");
 foreach (var key in new[] { "Вращение", "Показывать линии компаса", "Показывать направления",
-    "Зум через + и -", "Плавный зум", "Сохранять отдельный зум для кораблей" })
+    "Зум через + и -", "Плавный зум", "Сохранять отдельный зум для кораблей", "Указатель цели", "Показывать никнеймы" })
 {
     Check(ResetPreset.Value(key, true, true).Equals(false));
     Check(ResetPreset.Value(key, true, false).Equals(true));
 }
-Check(SettingsText.Choice("WindPosition", "Top", true) == "Сверху");
-Check(SettingsText.Choice("WindPosition", "Bottom", true) == "Снизу");
-Check(SettingsText.Choice("WindPosition", "Top", false) == "Top");
-Check(SettingsText.Choice("WindPosition", "Bottom", false) == "Bottom");
+Check(SettingsText.Choice("HudSlotContent", "Empty", true) == "Пусто");
+Check(SettingsText.Choice("HudSlotContent", "Wind", true) == "Ветер");
+Check(SettingsText.Choice("HudSlotContent", "Empty", false) == "Empty");
+Check(SettingsText.Choice("HudSlotContent", "Wind", false) == "Wind");
 Check(ResetPreset.Value("Размер мини-карты", 130, true).Equals(100));
 Check(ResetPreset.Value("Размер мини-карты", 130, false).Equals(130));
 Check(ResetPreset.Value("Min zoom", .1f, true).Equals(0f));
@@ -252,10 +252,8 @@ Check(ResetPreset.Value("Режим", TestRotation.CameraUp, true).Equals(TestRo
 Check(ResetPreset.Value("Режим", TestRotation.CameraUp, false).Equals(TestRotation.CameraUp));
 Check(ResetPreset.Value("Форма", TestShape.Circle, true).Equals(TestShape.Square));
 Check(ResetPreset.Value("Форма", TestShape.Circle, false).Equals(TestShape.Circle));
-Check(ResetPreset.Value("Положение биома", TestPosition.Above, true).Equals(TestPosition.Vanilla));
-Check(ResetPreset.Value("Положение биома", TestPosition.Above, false).Equals(TestPosition.Above));
-Check(ResetPreset.Value("Положение ветра", TestPosition.Bottom, true).Equals(TestPosition.Vanilla));
-Check(ResetPreset.Value("Положение ветра", TestPosition.Bottom, false).Equals(TestPosition.Bottom));
+Check(ResetPreset.Value("Slot 2", HudSlotContent.Biome, true).Equals(HudSlotContent.Biome));
+Check(ResetPreset.Value("Slot 3", HudSlotContent.Wind, false).Equals(HudSlotContent.Wind));
 Check(SettingsText.ResetLabel(true, false) == "Reset to Vanilla");
 Check(SettingsText.ResetLabel(false, false) == "Reset to mod default");
 Check(SettingsText.ResetLabel(true, true) == "Сбросить к настройкам игры");
@@ -319,8 +317,150 @@ finally
     System.Globalization.CultureInfo.CurrentCulture = previousCulture;
     Directory.Delete(memoryDir, true);
 }
+// Slot defaults/migration: never lose a biome or wind element, including old corner values.
+Check(HudSlots.Migrate("Above", "Bottom").SequenceEqual(new[] {
+    HudSlotContent.Empty, HudSlotContent.Biome, HudSlotContent.Wind, HudSlotContent.Empty }));
+Check(!SettingsText.HasEntry("Показывать координаты"));
+foreach (HudSlotContent content in Enum.GetValues<HudSlotContent>())
+foreach (bool hadSwitch in new[] { false, true })
+foreach (bool wasEnabled in new[] { false, true })
+{
+    var migrated = HudSlots.MigrateCoordinates(content, hadSwitch, wasEnabled);
+    Check(migrated == (hadSwitch && !wasEnabled && content == HudSlotContent.Coordinates ? HudSlotContent.Empty : content));
+    // Once the switch is removed, explicit coordinate choices must persist over subsequent starts.
+    Check(HudSlots.MigrateCoordinates(migrated, false, false) == migrated);
+}
+foreach (string biome in new[] { "Vanilla", "Above", "Below" })
+foreach (string wind in new[] { "Vanilla", "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Top", "Bottom" })
+{
+    var slots = HudSlots.Migrate(biome, wind);
+    Check(slots.Length == 4);
+    Check(slots.Count(x => x == HudSlotContent.Biome) == 1);
+    Check(slots.Count(x => x == HudSlotContent.Wind) == 1);
+    Check(slots.Count(x => x == HudSlotContent.Coordinates) == 0);
+    Check(slots[biome == "Below" ? 2 : 1] == HudSlotContent.Biome);
+    int windIndex = Array.IndexOf(slots, HudSlotContent.Wind);
+    Check(wind.StartsWith("Top") ? windIndex < 2 : windIndex >= 2);
+}
+// Wind reserves its full diagonal; outer slots must not overlap the inner rows.
+foreach (double inner in new[] { 10d, 19.2d, 22d, 36d, 56d, 100d })
+foreach (double outer in new[] { 10d, 19.2d, 22d, 36d, 56d, 100d })
+{
+    double upperInner = HudSlots.CenterOffset(1, inner, 0);
+    double upperOuter = HudSlots.CenterOffset(0, outer, inner);
+    Near(upperInner - inner / 2, HudSlots.Gap);
+    Near(upperOuter - outer / 2 - (upperInner + inner / 2), HudSlots.Gap);
+    Near(HudSlots.CenterOffset(2, inner, 0), -upperInner);
+    Near(HudSlots.CenterOffset(3, outer, inner), -upperOuter);
+}
+Check(SettingsText.Section("7. Навигация", false) == "7. Navigation");
+Near(HudSlots.Gap, 2);
+Near(HudSlots.CoordinatesFontSize, 9);
+Near(HudSlots.BiomeHeight(16), 26);
+Near(HudSlots.BiomeHeight(31.2), 36);
+Near(HudSlots.BiomeHeight(48), 52);
+Check(SettingsText.Section("8. Игроки", false) == "8. Players");
+Check(ResetPreset.Value("Размер шрифта никнеймов", PlayerNameLayout.DefaultFontSize, false).Equals(8));
+Near(PlayerNameLayout.DefaultFontSize, 8);
+Near(PlayerNameLayout.MinFontSize, 4);
+Near(PlayerNameLayout.MaxFontSize, 20);
+Near(PlayerNameLayout.Top(0, 32), -10.6);
+foreach (double iconHeight in new[] { 16d, 24d, 32d, 48d })
+foreach (double y in new[] { -80d, 0d, 60d })
+{
+    double nameTop = PlayerNameLayout.Top(y, iconHeight);
+    Check(nameTop < y);
+    Check(nameTop > y - iconHeight / 2 - 2); // closer than the old full-rectangle bottom + gap
+    Near(y - nameTop, iconHeight * .3 + 1);
+}
+Check(ResetPreset.Value("Обводка никнеймов", true, false).Equals(true));
+Near(HudSlots.CenterOffset(0, 10, 0), HudSlots.CenterOffset(1, 10, 0));
+Near(HudSlots.CenterOffset(3, 10, 0), HudSlots.CenterOffset(2, 10, 0));
+Near(HudSlots.CenterOffset(2, 22, 0), -13);
+Near(HudSlots.CenterOffset(3, 10, 22), -31);
+Check(ResetPreset.Value("Показывать мини-карту", true, true).Equals(true));
+Check(ResetPreset.Value("Показывать мини-карту", true, false).Equals(true));
+Check(SettingsText.TargetSelected(350.4, true) == "Цель выбрана (350 м)");
+Check(SettingsText.TargetSelected(350.5, true) == "Цель выбрана (351 м)");
+Check(SettingsText.TargetSelected(0, true) == "Цель выбрана (0 м)");
+Check(SettingsText.TargetSelected(12345.9, false) == "Target selected (12346 m)");
+Near(HudSlots.ViewportShift(480, 200, -500, 500), 0);
+Near(HudSlots.ViewportShift(550, 200, -500, 500), -50);
+Near(HudSlots.ViewportShift(-200, -550, -500, 500), 50);
+Near(HudSlots.ViewportShift(600, -600, -500, 500), -100);
+foreach (HudSlotContent content in Enum.GetValues<HudSlotContent>())
+{
+    Check(SettingsText.Choice(nameof(HudSlotContent), content.ToString(), true) != content.ToString());
+    Check(!SettingsText.Choice(nameof(HudSlotContent), content.ToString(), false).Any(c => c >= '\u0400' && c <= '\u04ff'));
+}
+
+// Target projection remains on the same ray through rotation and clamps to both shapes.
+foreach (bool round in new[] { false, true })
+foreach (double width in new[] { 160d, 240d, 300d })
+foreach (double height in new[] { 160d, 240d })
+foreach (double heading in new[] { 0d, 45d, 90d, 135d, 180d, 270d, 359d })
+foreach (double x in new[] { -10000d, -70d, 0d, 30d, 10000d })
+foreach (double y in new[] { -10000d, -70d, 0d, 30d, 10000d })
+{
+    var rotated = MapMath.Rotate(x, y, heading);
+    var point = TargetMath.Clamp(rotated.X, rotated.Y, width, height, 14, round);
+    Check(double.IsFinite(point.X) && double.IsFinite(point.Y));
+    Check(Math.Abs(point.X) <= width / 2 - 14 + 1e-8);
+    Check(Math.Abs(point.Y) <= height / 2 - 14 + 1e-8);
+    if (round) Check(Math.Sqrt(point.X * point.X + point.Y * point.Y) <= Math.Min(width, height) / 2 - 14 + 1e-8);
+    // Relative tolerance for the cross product of long rays.
+    Check(Math.Abs(point.X * rotated.Y - point.Y * rotated.X) < 1e-6);
+    if (!point.Outside) { Near(point.X, rotated.X); Near(point.Y, rotated.Y); }
+}
+var centerTarget = TargetMath.Clamp(0, 0, 200, 200, 14, true);
+Check(!centerTarget.Outside); Near(centerTarget.X, 0); Near(centerTarget.Y, 0);
+Near(TargetMath.Distance(0, 0, 3, 4), 5);
+Near(TargetMath.Distance(-3, -4, 0, 0), 5);
+Near(TargetMath.Distance(123, -456, 123, -456), 0);
+// A corner is visible on the square but requires an edge arrow on the circle.
+Check(!TargetMath.Clamp(70, 70, 200, 200, 14, false).Outside);
+Check(TargetMath.Clamp(70, 70, 200, 200, 14, true).Outside);
+var tiny = TargetMath.Clamp(100, -100, 20, 20, 46, false);
+Near(tiny.X, 0); Near(tiny.Y, 0); Check(tiny.Outside);
+// Nearby pings keep their native icon; no duplicate edge icon, even near the inner inset.
+foreach (bool round in new[] { false, true })
+{
+    Check(!TargetMath.EdgePing(0, 0, 200, 200, 17, round).Visible);
+    Check(!TargetMath.EdgePing(95, 0, 200, 200, 17, round).Visible);
+    foreach (double heading in new[] { 0d, 45d, 90d, 135d, 180d, 270d, 359d })
+    {
+        var far = MapMath.Rotate(1000, 0, heading);
+        var edge = TargetMath.EdgePing(far.X, far.Y, 200, 200, 17, round);
+        Check(edge.Visible);
+        Check(Math.Abs(edge.X * far.Y - edge.Y * far.X) < 1e-6);
+        Check(Math.Abs(edge.X) <= 83 + 1e-8 && Math.Abs(edge.Y) <= 83 + 1e-8);
+        if (round) Near(Math.Sqrt(edge.X * edge.X + edge.Y * edge.Y), 83);
+        // Moving back into view must hand rendering back to vanilla.
+        Check(!TargetMath.EdgePing(far.X / 20, far.Y / 20, 200, 200, 17, round).Visible);
+    }
+}
+Check(TargetMath.EdgePing(80, 80, 200, 200, 17, true).Visible);
+Check(!TargetMath.EdgePing(80, 80, 200, 200, 17, false).Visible);
+// A ring whose center fits but whose radius would cross the border becomes an edge arrow too.
+foreach (bool round in new[] { false, true })
+{
+    Check(!TargetMath.EdgePing(60, 0, 200, 200, 14, round, 20).Visible);
+    var clippedRing = TargetMath.EdgePing(85, 0, 200, 200, 14, round, 20);
+    Check(clippedRing.Visible); Near(clippedRing.X, 86); Near(clippedRing.Y, 0);
+    var largeRing = TargetMath.EdgePing(70, 0, 200, 200, 14, round, 32);
+    Check(largeRing.Visible); Near(largeRing.X, 86);
+}
+Near(TargetMath.ArrowAngle(0, 1), 0);
+Near(TargetMath.ArrowAngle(1, 0), -90);
+Near(TargetMath.ArrowAngle(-1, 0), 90);
+Near(TargetMath.ArrowAngle(0, -1), -180);
+foreach (double heading in new[] { 0d, 45d, 90d, 180d, 270d, 359d })
+{
+    var dir = MapMath.Rotate(1, 0, heading);
+    double angle = (TargetMath.ArrowAngle(dir.X, dir.Y) + 90) * Math.PI / 180;
+    Near(Math.Cos(angle), dir.X); Near(Math.Sin(angle), dir.Y);
+}
 Console.WriteLine($"OK: {checks} geometry/zoom/UI math checks");
 
 enum TestRotation { NorthUp, CameraUp }
 enum TestShape { Square, Circle }
-enum TestPosition { Vanilla, Above, Bottom }

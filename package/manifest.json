@@ -1,8 +1,8 @@
 {
   "name": "BetterMinimap",
-  "version_number": "1.0.1",
+  "version_number": "1.1.0",
   "website_url": "https://github.com/Xoma163/BetterMinimap",
-  "description": "Rotating, resizable minimap with smooth zoom, persistent ship zoom, compass and day/night lighting. Client-side, English/Russian settings.",
+  "description": "Rotating minimap with smooth zoom, HUD slots, XYZ coordinates, waypoints, edge pings and a brown border. Client-side, English/Russian settings.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2351"
   ]

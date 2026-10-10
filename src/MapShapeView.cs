@@ -87,7 +87,7 @@ internal sealed class MapShapeView : IDisposable
         foreach (var frame in mapRect.parent.GetComponentsInChildren<Graphic>(true))
         {
             if (!frame.enabled || frame.color.a <= 0 || frame == circle || frame == _map.m_mapImageSmall ||
-                frame is TMP_Text || frame is Text ||
+                frame is TMP_Text || frame is Text || frame is MapBorderGraphic ||
                 frame.transform.IsChildOf(_map.m_smallMarker) ||
                 frame.transform.IsChildOf(_map.m_smallShipMarker) ||
                 frame.transform.IsChildOf(_map.m_pinRootSmall) ||

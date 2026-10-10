@@ -8,6 +8,8 @@ namespace Shtab.RotatingMinimap;
 public sealed class ExternalTextShadow : MonoBehaviour
 {
     private TMP_Text? _source;
+    public float PixelWidth { get; set; } = 2;
+    private bool _respectMask;
     private readonly TextMeshProUGUI[] _copies = new TextMeshProUGUI[8];
     private static readonly Vector2[] Offsets = {
         new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, -1), new Vector2(0, 1),
@@ -15,9 +17,10 @@ public sealed class ExternalTextShadow : MonoBehaviour
         new Vector2(.7071f, -.7071f), new Vector2(.7071f, .7071f)
     };
 
-    public void Initialize(TMP_Text source)
+    public void Initialize(TMP_Text source, bool respectMask = false)
     {
         _source = source;
+        _respectMask = respectMask;
         for (int i = 0; i < _copies.Length; i++)
         {
             var go = new GameObject("BetterMinimapBiomeOutline", typeof(RectTransform));
@@ -26,14 +29,17 @@ public sealed class ExternalTextShadow : MonoBehaviour
             go.transform.SetSiblingIndex(source.transform.GetSiblingIndex());
             var copy = go.AddComponent<TextMeshProUGUI>();
             copy.raycastTarget = false;
-            copy.maskable = false;
+            copy.maskable = respectMask && source.maskable;
             copy.overrideColorTags = true;
             _copies[i] = copy;
             go.SetActive(true);
             copy.RecalculateClipping();
             copy.RecalculateMasking();
-            copy.canvasRenderer.DisableRectClipping();
-            copy.canvasRenderer.cull = false;
+            if (!respectMask)
+            {
+                copy.canvasRenderer.DisableRectClipping();
+                copy.canvasRenderer.cull = false;
+            }
         }
         LateUpdate();
     }
@@ -56,6 +62,7 @@ public sealed class ExternalTextShadow : MonoBehaviour
             if (source.font) copy.fontSharedMaterial = source.font.material;
             copy.text = source.text;
             copy.richText = source.richText;
+            copy.maskable = _respectMask && source.maskable;
             copy.isRightToLeftText = source.isRightToLeftText;
             copy.fontSize = source.fontSize;
             copy.fontStyle = source.fontStyle;
@@ -81,7 +88,7 @@ public sealed class ExternalTextShadow : MonoBehaviour
             target.anchorMin = rect.anchorMin; target.anchorMax = rect.anchorMax;
             target.pivot = rect.pivot; target.sizeDelta = rect.sizeDelta;
             target.anchoredPosition3D = rect.anchoredPosition3D +
-                (Vector3)((pixels.Right * Offsets[i].x + pixels.Up * Offsets[i].y) * 2f);
+                (Vector3)((pixels.Right * Offsets[i].x + pixels.Up * Offsets[i].y) * PixelWidth);
             target.localScale = rect.localScale; target.localRotation = rect.localRotation;
         }
     }

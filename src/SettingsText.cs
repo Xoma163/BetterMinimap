@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Shtab.RotatingMinimap;
 
@@ -9,13 +11,20 @@ internal static class SettingsText
         new Dictionary<string, (string, string, string)>
     {
         ["Мод включён"] = ("Enable mod", "Выключить все функции мода, сохранив настройки. Возвращается штатная мини-карта.", "Disable all mod features without losing settings. Restores the vanilla minimap."),
+        ["Показывать мини-карту"] = ("Show minimap", "Показывать мини-карту и её слоты. По умолчанию включено. Большая карта M остаётся доступной. Требуется включённый мод.", "Show the minimap and its HUD slots. Enabled by default. The large M map remains available. Requires the mod to be enabled."),
         ["Вращение"] = ("Rotation", "Вращать мини-карту. Большая карта не изменяется.", "Rotate the minimap. The large map is unchanged."),
         ["Режим"] = ("Orientation", "Север сверху, по камере или по персонажу.", "Keep north up, or follow the camera or character heading."),
         ["Форма"] = ("Shape", "Квадратная или круглая мини-карта.", "Square or circular minimap."),
         ["Освещение карты"] = ("Map lighting", "По времени суток, всегда день или всегда ночь. Освещение мира и большой карты не меняется.", "Follow time of day, always day or always night. Does not affect world or large-map lighting."),
         ["Размер мини-карты"] = ("Minimap size", "Размер всего блока: 50–150%. При увеличении бафы сдвигаются влево.", "Scale the entire minimap: 50–150%. Enlarging it shifts status effects to the left."),
-        ["Положение биома"] = ("Biome position", "Штатное положение, над картой или под ней. Для обеих форм.", "Default position, above or below the map. Applies to both shapes."),
-        ["Положение ветра"] = ("Wind position", "Штатное положение или снаружи карты: сверху/снизу по центру либо по углам.", "Default position or outside the map: top/bottom center or at a corner."),
+        ["Slot 1"] = ("Slot 1", "Верхний дальний слот. Пусто, биом, ветер или координаты; элементы можно повторять.", "Upper outer slot. Empty, biome, wind or coordinates; elements may be repeated."),
+        ["Slot 2"] = ("Slot 2", "Слот непосредственно над мини-картой. По умолчанию — биом.", "Slot immediately above the minimap. Default: biome."),
+        ["Slot 3"] = ("Slot 3", "Слот непосредственно под мини-картой. По умолчанию — ветер.", "Slot immediately below the minimap. Default: wind."),
+        ["Slot 4"] = ("Slot 4", "Нижний дальний слот. По умолчанию — пусто. Выберите «Координаты» для показа X/Y/Z. Пустые слоты не занимают место.", "Lower outer slot. Default: empty. Select Coordinates to show X/Y/Z. Empty slots take no space."),
+        ["Указатель цели"] = ("Target indicator", "Shift + ЛКМ по любой точке большой карты — указать цель. Shift + ПКМ — снять, не удаляя метки. Направление и расстояние по горизонтали на мини-карте. Только текущий сеанс.", "Shift + left-click anywhere on the large map to set a waypoint. Shift + right-click to clear without deleting pins. Shows direction and horizontal distance on the minimap. Current session only."),
+        ["Показывать никнеймы"] = ("Show player names", "Никнеймы под иконками других игроков с открытой позицией. Имя своего персонажа не показывается. Большая карта не меняется.", "Names below the icons of other players sharing their position. Your own name is not shown. The large map is unchanged."),
+        ["Размер шрифта никнеймов"] = ("Player name font size", "Размер текста под иконками игроков, 4–20, по умолчанию 8. Не влияет на биом и координаты.", "Font size below player icons, 4–20, default 8. Does not affect the biome or coordinates."),
+        ["Обводка никнеймов"] = ("Player name outline", "Чёрная обводка никнеймов толщиной 2 пикселя. Можно отключить независимо от размера шрифта.", "Black 2-pixel outline around player names. Can be disabled independently of the font size."),
         ["Min zoom"] = ("Min zoom", "Минимальное приближение. 0 — без пользовательского ограничения отдаления.", "Minimum magnification. 0 removes the custom zoom-out limit."),
         ["Max zoom"] = ("Max zoom", "Максимальное приближение относительно ×1. При Min > Max пределы меняются местами.", "Maximum magnification relative to ×1. If Min exceeds Max, the limits are swapped."),
         ["Шаг зума"] = ("Zoom step", "Множитель ступеней зума, привязанных к ×1. Не меняет шаг штатных клавиш.", "Multiplier between zoom levels anchored at ×1. Does not change the native keys' step."),
@@ -32,6 +41,10 @@ internal static class SettingsText
     };
 
     public static string Pick(bool ru, string russian, string english) => ru ? russian : english;
+    public static string TargetSelected(double meters, bool ru) =>
+        Pick(ru, "Цель выбрана (", "Target selected (") +
+        Math.Round(meters, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.InvariantCulture) +
+        Pick(ru, " м)", " m)");
     public static string ResetLabel(bool vanilla, bool ru) => vanilla
         ? Pick(ru, "Сбросить к настройкам игры", "Reset to Vanilla")
         : Pick(ru, "Сбросить к настройкам мода", "Reset to mod default");
@@ -68,6 +81,9 @@ internal static class SettingsText
             case "3. Зум": return "3. Zoom";
             case "4. Клавиши": return "4. Shortcuts";
             case "5. Компас": return "5. Compass";
+            case "6. HUD": return "6. HUD";
+            case "7. Навигация": return "7. Navigation";
+            case "8. Игроки": return "8. Players";
             default: return section;
         }
     }
@@ -79,15 +95,10 @@ internal static class SettingsText
             case "MapLighting.TimeOfDay": return Pick(ru, "По времени суток", "Time of day");
             case "MapLighting.Day": return Pick(ru, "Всегда день", "Always day");
             case "MapLighting.Night": return Pick(ru, "Всегда ночь", "Always night");
-            case "BiomePosition.Vanilla": case "WindPosition.Vanilla": return Pick(ru, "По умолчанию", "Default");
-            case "BiomePosition.Above": return Pick(ru, "Сверху", "Above");
-            case "BiomePosition.Below": return Pick(ru, "Снизу", "Below");
-            case "WindPosition.TopLeft": return Pick(ru, "Сверху слева", "Top left");
-            case "WindPosition.TopRight": return Pick(ru, "Сверху справа", "Top right");
-            case "WindPosition.BottomLeft": return Pick(ru, "Снизу слева", "Bottom left");
-            case "WindPosition.BottomRight": return Pick(ru, "Снизу справа", "Bottom right");
-            case "WindPosition.Top": return Pick(ru, "Сверху", "Top");
-            case "WindPosition.Bottom": return Pick(ru, "Снизу", "Bottom");
+            case "HudSlotContent.Empty": return Pick(ru, "Пусто", "Empty");
+            case "HudSlotContent.Biome": return Pick(ru, "Биом", "Biome");
+            case "HudSlotContent.Wind": return Pick(ru, "Ветер", "Wind");
+            case "HudSlotContent.Coordinates": return Pick(ru, "Координаты", "Coordinates");
             case "MapShape.Square": return Pick(ru, "Квадратная", "Square");
             case "MapShape.Circle": return Pick(ru, "Круглая", "Circle");
             case "RotationMode.NorthUp": return Pick(ru, "Север сверху", "North up");

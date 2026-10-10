@@ -194,14 +194,21 @@ internal static class ModManagerBridge
         switch (key)
         {
             case "Мод включён": return -1;
+            case "Показывать мини-карту": return 0;
             case "Вращение": case "Min zoom": case "Зум через + и -": case "Показывать линии компаса": return 0;
             case "Режим": case "Max zoom": case "Приблизить": case "Показывать направления": return 1;
             case "Форма": case "Шаг зума": case "Отдалить": case "Тип линии": return 2;
             case "Размер мини-карты": case "Сохранять отдельный зум для кораблей": case "Цвет линии": return 3;
-            case "Положение биома": case "Толщина линии": return 4;
-            case "Положение ветра": return 5;
+            case "Толщина линии": return 4;
             case "Освещение карты": return 6;
             case "Плавный зум": return 4;
+            case "Slot 1": case "Указатель цели": return 0;
+            case "Slot 2": return 1;
+            case "Slot 3": return 2;
+            case "Slot 4": return 3;
+            case "Показывать никнеймы": return 0;
+            case "Размер шрифта никнеймов": return 1;
+            case "Обводка никнеймов": return 2;
             default: return 100;
         }
     }

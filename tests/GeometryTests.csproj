@@ -11,5 +11,8 @@
     <Compile Include="../src/SmoothZoom.cs" Link="SmoothZoom.cs" />
     <Compile Include="../src/SettingsText.cs" Link="SettingsText.cs" />
     <Compile Include="../src/ResetPreset.cs" Link="ResetPreset.cs" />
+    <Compile Include="../src/HudSlots.cs" Link="HudSlots.cs" />
+    <Compile Include="../src/TargetMath.cs" Link="TargetMath.cs" />
+    <Compile Include="../src/PlayerNameLayout.cs" Link="PlayerNameLayout.cs" />
   </ItemGroup>
 </Project>

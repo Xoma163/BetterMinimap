@@ -12,12 +12,13 @@ namespace Shtab.RotatingMinimap;
 
 public enum RotationMode { NorthUp, CameraUp, CharacterUp }
 public enum MapShape { Square, Circle }
+// Migration-only types; these positions are no longer exposed as settings.
 public enum BiomePosition { Vanilla, Above, Below }
 public enum WindPosition { Vanilla, TopLeft, TopRight, BottomLeft, BottomRight, Top, Bottom }
 public enum CompassLineType { Dashed, Solid }
 public enum MapLighting { TimeOfDay, Day, Night }
 
-[BepInPlugin(Id, "Better Minimap", "1.0.1")]
+[BepInPlugin(Id, "Better Minimap", "1.1.0")]
 [BepInProcess("valheim.exe")]
 [BepInDependency("com.morda.storeandcraft", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
@@ -26,6 +27,8 @@ public sealed class Plugin : BaseUnityPlugin
     internal static Plugin? Instance;
     private ConfigEntry<bool> _enabled = null!;
     private ConfigEntry<bool> _modEnabled = null!;
+    private ConfigEntry<bool> _showMinimap = null!;
+    private MinimapVisibility? _visibility;
     private Minimap? _zoomReferenceMap;
     private float _zoomReference;
     private bool _resetZoomOnEnable;
@@ -38,8 +41,15 @@ public sealed class Plugin : BaseUnityPlugin
     private ConfigEntry<MapLighting> _lighting = null!;
     private MapLightingView? _lightingView;
     private ConfigEntry<int> _sizePercent = null!;
-    private ConfigEntry<BiomePosition> _biomePosition = null!;
-    private ConfigEntry<WindPosition> _windPosition = null!;
+    private readonly ConfigEntry<HudSlotContent>[] _slots = new ConfigEntry<HudSlotContent>[4];
+    private readonly HudSlotContent[] _slotContents = new HudSlotContent[4];
+    private ConfigEntry<bool> _targetEnabled = null!;
+    private TargetIndicator? _targetIndicator;
+    private PingIndicators? _pingIndicators;
+    private MapBorderView? _borderView;
+    private ConfigEntry<bool> _showPlayerNames = null!, _playerNameOutline = null!;
+    private ConfigEntry<int> _playerNameSize = null!;
+    private PlayerNamesView? _playerNames;
     private ConfigEntry<bool> _separateShipZoom = null!;
     private ConfigEntry<bool> _smoothZoomEnabled = null!;
     private readonly SmoothZoom _smoothZoom = new SmoothZoom();
@@ -95,9 +105,9 @@ public sealed class Plugin : BaseUnityPlugin
             "NorthUp — север сверху; CameraUp — по камере; CharacterUp — по персонажу. Применяется сразу.");
         _shape = Config.Bind("1. Карта", "Форма", MapShape.Circle,
             "Square — квадратная; Circle — круглая. Только мини-карта, применяется сразу.");
-        _biomePosition = Config.Bind("1. Карта", "Положение биома", BiomePosition.Above,
+        var biomePosition = Config.Bind("1. Карта", "Положение биома", BiomePosition.Above,
             "По умолчанию / сверху / снизу. Для обеих форм карты.");
-        _windPosition = Config.Bind("1. Карта", "Положение ветра", WindPosition.Bottom,
+        var windPosition = Config.Bind("1. Карта", "Положение ветра", WindPosition.Bottom,
             "По умолчанию либо снаружи карты: сверху/снизу по центру или у левого/правого края. Направление стрелки не меняется.");
         // Consume obsolete entries before removing them, including BepInEx orphaned values.
         Config.Bind("1. Карта", "Обводка биома и ветра", true);
@@ -148,11 +158,13 @@ public sealed class Plugin : BaseUnityPlugin
         Config.Bind("2. Зум", "Штатные пределы зума", false);
         Config.Remove(new ConfigDefinition("2. Зум", "Штатные пределы зума"));
         _modEnabled = RebindSection(_modEnabled, "1. Общее");
+        _showMinimap = Config.Bind("1. Общее", "Показывать мини-карту", true,
+            "Показывать мини-карту и её слоты. По умолчанию включено. Большая карта M остаётся доступной. Требуется включённый мод.");
         _enabled = RebindSection(_enabled, "2. Карта");
         _mode = RebindSection(_mode, "2. Карта");
         _shape = RebindSection(_shape, "2. Карта");
-        _biomePosition = RebindSection(_biomePosition, "2. Карта");
-        _windPosition = RebindSection(_windPosition, "2. Карта");
+        biomePosition = RebindSection(biomePosition, "2. Карта");
+        windPosition = RebindSection(windPosition, "2. Карта");
         _sizePercent = RebindSection(_sizePercent, "2. Карта");
         _minZoom = RebindSection(_minZoom, "3. Зум");
         _maxZoom = RebindSection(_maxZoom, "3. Зум");
@@ -169,6 +181,29 @@ public sealed class Plugin : BaseUnityPlugin
         _lineThickness = RebindSection(_lineThickness, "5. Компас");
         _lighting = Config.Bind("2. Карта", "Освещение карты", MapLighting.TimeOfDay,
             "По времени суток, всегда день или всегда ночь. Только мини-карта, без изменения освещения мира.");
+        var migratedSlots = HudSlots.Migrate(biomePosition.Value.ToString(), windPosition.Value.ToString());
+        Config.Remove(biomePosition.Definition);
+        Config.Remove(windPosition.Definition);
+        var oldCoordinates = Config.Bind("6. HUD", "Показывать координаты", false);
+        bool hadCoordinatesSwitch = _storedKeys.Contains(oldCoordinates.Definition);
+        HudSlotContent[] defaultSlots = { HudSlotContent.Empty, HudSlotContent.Biome, HudSlotContent.Wind, HudSlotContent.Empty };
+        for (int i = 0; i < 4; i++)
+        {
+            _slots[i] = Config.Bind("6. HUD", "Slot " + (i + 1), defaultSlots[i],
+                "Содержимое слота. Порядок сверху вниз: Slot 1, Slot 2, мини-карта, Slot 3, Slot 4. Пустые слоты не занимают место. Элементы можно повторять.");
+            if (!_storedKeys.Contains(_slots[i].Definition)) _slots[i].Value = migratedSlots[i];
+            _slots[i].Value = HudSlots.MigrateCoordinates(_slots[i].Value, hadCoordinatesSwitch, oldCoordinates.Value);
+        }
+        Config.Remove(oldCoordinates.Definition);
+        _targetEnabled = Config.Bind("7. Навигация", "Указатель цели", true,
+            "Shift + ЛКМ по любой точке большой карты — указать цель. Shift + ПКМ — снять цель, не удаляя метки. На мини-карте показаны направление и расстояние по горизонтали. Только текущий сеанс.");
+        _showPlayerNames = Config.Bind("8. Игроки", "Показывать никнеймы", true,
+            "Никнеймы под иконками других игроков с открытой позицией. Имя своего персонажа не показывается. Большая карта не меняется.");
+        _playerNameSize = Config.Bind("8. Игроки", "Размер шрифта никнеймов", PlayerNameLayout.DefaultFontSize,
+            new ConfigDescription("Размер текста под иконками игроков, 4–20, по умолчанию 8. Не влияет на биом и координаты.",
+                new AcceptableValueRange<int>(PlayerNameLayout.MinFontSize, PlayerNameLayout.MaxFontSize)));
+        _playerNameOutline = Config.Bind("8. Игроки", "Обводка никнеймов", true,
+            "Чёрная обводка никнеймов толщиной 2 пикселя. Включается независимо от размера шрифта.");
         RoundEntry(_minZoom, 0, 20);
         RoundEntry(_maxZoom, .1f, 20);
         RoundEntry(_zoomStep, 1.1f, 3);
@@ -282,7 +317,14 @@ public sealed class Plugin : BaseUnityPlugin
                 _hudSpacing = new HudSpacing(map, _scaleView);
                 _zoomIndicator = new ZoomIndicator(map);
                 _lightingView = new MapLightingView(map);
+                _targetIndicator = new TargetIndicator(map);
+                _pingIndicators = new PingIndicators(map);
+                _borderView = new MapBorderView(map);
+                _visibility = new MinimapVisibility(map);
+                _playerNames = new PlayerNamesView(map);
             }
+            _hudSpacing?.BeforeMap();
+            _pingIndicators?.BeforeMap();
             RestoreMarkers();
             _scaleView?.Apply(_sizePercent.Value);
             if (_shapeView == null) _shapeView = new MapShapeView(map);
@@ -333,15 +375,20 @@ public sealed class Plugin : BaseUnityPlugin
             bool active = Active(map) && Player.m_localPlayer && map.m_mapImageSmall;
             _lightingView?.Apply(_lighting.Value, EnvMan.instance ? EnvMan.instance.GetDayFraction() : .5f);
             _shapeView?.Apply(_shape.Value == MapShape.Circle);
-            _hudSpacing?.Apply(_sizePercent.Value, _biomePosition.Value, _windPosition.Value,
-                _shape.Value == MapShape.Circle);
+            _visibility?.Apply(_showMinimap.Value);
+            for (int i = 0; i < 4; i++) _slotContents[i] = _slots[i].Value;
+            _hudSpacing?.Apply(_sizePercent.Value, _slotContents, active ? _heading : 0, _showMinimap.Value);
+            _borderView?.Update(_shape.Value == MapShape.Circle);
             _zoomIndicator?.Update(_baseZoom, (float)_smoothZoom.Target, _shipZoom.ShipMode, _zoomContextChanged,
                 _hudSpacing?.ZoomIndicatorOffset ?? 0);
             _zoomContextChanged = false;
             UpdateNorth(map, active ? _heading : 0f);
+            _targetIndicator?.Update(_targetEnabled.Value, active ? _heading : 0, _shape.Value == MapShape.Circle);
+            _pingIndicators?.Update(active ? _heading : 0, _shape.Value == MapShape.Circle);
             if (!active)
             {
                 if (_effect) _effect.SetHeading(0);
+                UpdatePlayerNames();
                 return;
             }
             if (!_effect)
@@ -355,6 +402,7 @@ public sealed class Plugin : BaseUnityPlugin
             map.m_smallMarker.rotation = offset * _playerRotation;
             map.m_smallShipMarker.rotation = offset * _shipRotation;
             map.m_windMarker.rotation = offset * _windRotation;
+            UpdatePlayerNames();
         }
         catch (Exception error) { Fail(error); }
     }
@@ -369,9 +417,26 @@ public sealed class Plugin : BaseUnityPlugin
         if (_map.m_windMarker) _map.m_windMarker.rotation = _windRotation;
     }
 
+    private void UpdatePlayerNames() => _playerNames?.Update(_showMinimap.Value && _showPlayerNames.Value,
+        _playerNameSize.Value, _playerNameOutline.Value, _shape.Value == MapShape.Circle);
+
+    internal bool CanSelectTarget(Minimap map) => !_failed && isActiveAndEnabled && _modEnabled.Value &&
+        _targetEnabled.Value && _map == map && map.m_mode == Minimap.MapMode.Large && Player.m_localPlayer &&
+        !ZInput.VirtualKeyboardOpen && !Minimap.InTextInput();
+
+    internal void SelectTarget(bool clear = false)
+    {
+        try
+        {
+            if (clear) _targetIndicator?.Clear();
+            else _targetIndicator?.Select();
+        }
+        catch (Exception error) { Fail(error); }
+    }
+
     internal void Zoom(Minimap map, bool takeInput)
     {
-        if (_failed || !isActiveAndEnabled || !_modEnabled.Value || !_zoomKeys.Value || !takeInput ||
+        if (_failed || !isActiveAndEnabled || !_modEnabled.Value || !_showMinimap.Value || !_zoomKeys.Value || !takeInput ||
             map.m_mode != Minimap.MapMode.Small || Cursor.visible || ZInput.VirtualKeyboardOpen) return;
         try
         {
@@ -498,7 +563,7 @@ public sealed class Plugin : BaseUnityPlugin
     private void UpdateNorth(Minimap map, float heading)
     {
         if (!map.m_mapImageSmall) return;
-        bool visible = (_showLines.Value || _showLetters.Value) && map.m_mode == Minimap.MapMode.Small && Player.m_localPlayer;
+        bool visible = _showMinimap.Value && (_showLines.Value || _showLetters.Value) && map.m_mode == Minimap.MapMode.Small && Player.m_localPlayer;
         if (visible && _compass == null) _compass = new Compass(map);
         _compass?.Show(visible, map.m_mapImageSmall.rectTransform.rect, heading,
             _showLines.Value, _showLetters.Value, _shape.Value == MapShape.Circle,
@@ -516,6 +581,16 @@ public sealed class Plugin : BaseUnityPlugin
     private void Release()
     {
         RestoreMarkers();
+        _visibility?.Dispose();
+        _visibility = null;
+        _playerNames?.Dispose();
+        _playerNames = null;
+        _targetIndicator?.Dispose();
+        _targetIndicator = null;
+        _pingIndicators?.Dispose();
+        _pingIndicators = null;
+        _borderView?.Dispose();
+        _borderView = null;
         _zoomIndicator?.Dispose();
         _zoomIndicator = null;
         _shipZoom.Suspend();
