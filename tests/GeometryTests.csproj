@@ -10,9 +10,12 @@
     <Compile Include="../src/ZoomMemoryStore.cs" Link="ZoomMemoryStore.cs" />
     <Compile Include="../src/SmoothZoom.cs" Link="SmoothZoom.cs" />
     <Compile Include="../src/SettingsText.cs" Link="SettingsText.cs" />
+    <Compile Include="../src/SettingsLayout.cs" Link="SettingsLayout.cs" />
     <Compile Include="../src/ResetPreset.cs" Link="ResetPreset.cs" />
     <Compile Include="../src/HudSlots.cs" Link="HudSlots.cs" />
     <Compile Include="../src/TargetMath.cs" Link="TargetMath.cs" />
     <Compile Include="../src/PlayerNameLayout.cs" Link="PlayerNameLayout.cs" />
+    <Compile Include="../src/TransportLayout.cs" Link="TransportLayout.cs" />
+    <Compile Include="../src/MapFrameGeometry.cs" Link="MapFrameGeometry.cs" />
   </ItemGroup>
 </Project>

@@ -4,6 +4,18 @@
 
 [Releases](https://github.com/Xoma163/BetterMinimap/releases) · [Report a bug](https://github.com/Xoma163/BetterMinimap/issues) · [Русский](#русский)
 
+## What's new in 1.1.1
+
+Changes since **1.1.0**:
+
+- **7. Transport:** carts, rafts and ships on both maps, including parked vehicles. Show transport defaults to On; **icon size 5–20, default 12**. Uses standard Ship/Vagon components, including compatible modded vehicles. Only nearby client-loaded objects are shown, not all vehicles in the world; no saved pins or network changes. No duplicate controlled-ship marker.
+- **Player icon priority:** player icons are above other map icons and labels; your own arrow is highest. Player icon sizes, clipping and pointer pass-through are preserved.
+- **Clean circular edge:** geometric mask and brown frame share their contour, fixing terrain pixels protruding beyond the outline. Frame color/thickness are unchanged; no black outer band.
+- **Coordinate readability:** fixed missing/stale outline copies. Font size **9**, full **3-pixel outline**, **no background rectangle**.
+- **Seven settings sections:** General, Map appearance, Zoom and controls, Around the map, Compass and navigation, Players, Transport. Reset buttons are in General; slot-order and ping help are included.
+- **Automatic migration:** previous values are retained, including shortcuts and slot choices; explicitly saved new-section values win. Keyboard zoom is now labeled **Zoom with extra keys**, with the same config key and behavior.
+- Updated RU/EN documentation and regression tests. See [CHANGELOG.md](CHANGELOG.md) for details.
+
 ## What's new in 1.1.0
 
 Changes since **1.0.1**:
@@ -33,10 +45,11 @@ Changes since **1.0.1**:
 - **Visibility:** General → Show minimap hides the small map and its entire HUD block; the large M map remains available.
 - **Border:** a single thin brown outline follows the circular or square map edge, without a dark outer band.
 - **Player names:** horizontal nicknames close below other players' icons, for players sharing their position. Your own name is hidden. Font size 4–20 (default 8) and an optional outline, independent of coordinates and biome text.
+- **Transport:** one default-On switch for nearby client-loaded carts, rafts and ships on both maps; parked vehicles are included. Standard Ship/Vagon-based modded vehicles are supported too.
 - **Lighting:** follow time of day, always day, or always night. Only the minimap material is changed.
 - **Settings:** English, or Russian when the game language is Russian. Optional integration with StoreAndCraft's mod settings window.
 
-The large **M** map keeps its normal controls; Shift+left/right-click and a temporary waypoint marker are added for navigation. World lighting, exploration data, networking and world saves are not modified. **Install on the client, not on the server.**
+The large **M** map keeps its normal controls; Shift+left/right-click, a temporary waypoint marker and optional transport icons are added. World lighting, exploration data, networking and world saves are not modified. **Install on the client, not on the server.**
 
 ## Screenshot
 
@@ -58,12 +71,24 @@ Do not install the old **Shtab Rotating Minimap** DLL alongside Better Minimap. 
 
 In StoreAndCraft's mod settings window (usually **F10**), choose **Better Minimap**. Changes apply after **Save**; closing or going back without saving discards them. Other configuration managers are not modified by our localization integration.
 
-Sections: **1. General → 2. Map → 3. Zoom → 4. Shortcuts → 5. Compass → 6. HUD → 7. Navigation → 8. Players**.
+| Section | Settings |
+| --- | --- |
+| **1. General** | Enable mod, show minimap, both reset buttons |
+| **2. Map appearance** | Shape, size, lighting, rotation, orientation |
+| **3. Zoom and controls** | Min/Max zoom, step, smoothing, separate ship zoom, keyboard zoom, zoom-in/out keys |
+| **4. Around the map** | Slots 1–4: Empty / Biome / Wind / Coordinates; slot-order diagram |
+| **5. Compass and navigation** | Directions, lines, line style/thickness/color, target indicator; waypoint controls and ping help |
+| **6. Players** | Show names, name font size, name outline |
+| **7. Transport** | Show transport, transport icon size |
+
+Saved values are moved into these sections automatically; there is no need to reset your profile. Ship zoom remains in Zoom and controls because it controls magnification rather than vehicle icons.
 
 | Setting | Mod default |
 | --- | --- |
 | Enable mod | On |
 | Show minimap | On |
+| Show transport | On; nearby client-loaded vehicles on both maps |
+| Transport icon size | 12 (range 5–20); player icons unchanged |
 | Rotation | Camera up |
 | Shape / size | Circle / 130% |
 | Slots 1 / 2 / 3 / 4 | Empty / biome / wind / empty |
@@ -80,6 +105,7 @@ Sections: **1. General → 2. Map → 3. Zoom → 4. Shortcuts → 5. Compass �
 
 - **Enable mod:** switches off all mod features without losing settings. The settings window remains available.
 - **Show minimap** (General): hides the small map, slots, compass and overlays without disabling the mod or the large M map. Enabled by default; both reset presets restore it to On. The master mod switch takes precedence and restores the native map when disabled.
+- **Show transport** (7. Transport): controls all vehicle icons, including the controlled ship, on both maps. Carts use a wheeled icon; rafts/ships use a sailboat icon. Only currently loaded Ship/Vagon objects are shown, not distant unloaded vehicles. No saved pins are created. Disabling the master mod switch restores the native controlled-ship marker. Icon size is configured here too: 5–20, default 12.
 - **Reset to Vanilla:** stages a vanilla-like preset: square, 100%, north up, daytime lighting, Min 0 / Max 1, and custom rotation, zoom keys, smoothing, ship zoom, compass, coordinates and target indicator disabled. It is only a preset, not a locked mode. The default slot layout, outlines and zoom indicator remain while the mod is enabled. Use the master switch for a completely unmodified minimap, including its original biome/wind positions.
 - **Reset to mod default:** stages the defaults in the table. **Neither reset changes the master enable switch**, including an unsaved manual change to it.
 - Both resets apply after Save and reset saved land/ship zoom to ×1, subject to the selected limits. If the mod is disabled, the zoom reset waits until it is manually enabled.
@@ -101,7 +127,7 @@ Slot 4  (empty)
 
 Each slot offers **Empty / Biome / Wind / Coordinates**. Elements can be repeated. Empty slots take no space; filled slots use compact spacing. The biome font and wind arrow retain their native sizes; the biome row reserves enough height for its actual font metrics. Select **Coordinates** to immediately show X/Y/Z with a 9-unit font and a 3-pixel outline; select **Empty** to hide them. Y is the player's world height. There is no separate coordinate toggle. The temporary zoom label appears below the last visible lower slot.
 
-**Players:** names are enabled by default, with font size **8** (range **4–20**) and a **2-pixel** outline. Change these independently in **8. Players**. Names stay horizontal and close below the visible icon, discounting the sprite's transparent margins, and clip at the minimap boundary. Only the game's existing other public-position players are labeled; your own name is hidden and private player locations are not discovered. The large map is unchanged. The vanilla-like preset disables these labels. Existing saved font sizes are retained within the new bounds; select 8 manually to adopt the new default in an existing profile.
+**Players:** names are enabled by default, with font size **8** (range **4–20**) and a **2-pixel** outline. Change these independently in **6. Players**. Names stay horizontal and close below the visible icon, discounting the sprite's transparent margins, and clip at the minimap boundary. Only the game's existing other public-position players are labeled; your own name is hidden and private player locations are not discovered. The large map is unchanged. The vanilla-like preset disables these labels. Existing saved font sizes are retained within the new bounds; select 8 manually to adopt the new default in an existing profile.
 
 With **Target indicator** enabled, open **M** and **Shift+left-click any point**, including empty map space, to set or move a waypoint. A gold diamond shows the selected point on the large map and minimap; an edge arrow indicates an off-screen minimap target. Distance is measured horizontally in meters. **Shift+right-click** the large map to clear the waypoint without deleting a pin below the cursor. Ordinary clicks, pin checking, deletion and double-click creation retain their native behavior; the waypoint gestures do not modify pins. Selection is local to this session and clears when the feature/mod is disabled or the minimap is recreated. It is not saved or shared with other players.
 
@@ -154,6 +180,18 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 
 **Better Minimap — клиентский мод мини-карты Valheim от AndrewSha.**
 
+### Что изменилось в 1.1.1
+
+По сравнению с **1.1.0**:
+
+- **7. Транспорт:** тележки, плоты и корабли на обеих картах, включая припаркованные. Показ включён по умолчанию; **размер иконок 5–20, по умолчанию 12**. Поддерживаются стандартные компоненты Ship/Vagon и совместимые модификации. Только загруженные рядом объекты, не весь транспорт мира; без постоянных меток и изменения сети. Управляемый корабль не получает дублирующую метку.
+- **Приоритет игроков:** иконки игроков выше остальных значков и надписей, своя стрелка — выше всех. Размеры иконок игроков, обрезка и пропуск кликов сохранены.
+- **Ровный край карты:** маска круга и коричневая рамка используют согласованную геометрию — исправлены выступающие пиксели карты. Цвет и толщина рамки сохранены, чёрного внешнего слоя нет.
+- **Читаемые координаты:** исправлены пропадающие копии обводки. Шрифт **9**, полноценная обводка **3 пикселя**, **без прямоугольной подложки**.
+- **Семь разделов настроек:** Общее, Вид карты, Масштаб и управление, Элементы вокруг карты, Компас и навигация, Игроки, Транспорт. Кнопки сброса в «Общем»; добавлены схема слотов и подсказка про пинги.
+- **Автоматический перенос:** старые значения сохраняются, включая клавиши и слоты; явно сохранённые новые разделы имеют приоритет. Переключатель зума называется **«Зум через доп. клавиши»**, ключ конфига и поведение прежние.
+- Обновлены RU/EN-документация и тесты. Подробности — в [CHANGELOG.md](CHANGELOG.md).
+
 ### Что изменилось в 1.1.0
 
 По сравнению с **1.0.1**:
@@ -183,10 +221,11 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 - «Общее → Показывать мини-карту» скрывает мини-карту и весь её блок; большая карта M остаётся доступной.
 - Тонкая коричневая рамка по контуру круглой/квадратной карты, без дополнительного тёмного слоя снаружи.
 - Никнеймы близко под иконками других игроков с открытой позицией; своё имя скрыто. Размер шрифта 4–20 (по умолчанию 8) и отдельный переключатель обводки.
+- Общий переключатель транспорта: тележки, плоты и корабли, включая припаркованные, на обеих картах. Включён по умолчанию; показывает загруженные рядом объекты, включая модифицированные на компонентах Ship/Vagon.
 - Освещение мини-карты: по времени суток, всегда день или всегда ночь.
 - Русские настройки при русском языке игры, английские — при остальных.
 
-Обычное управление большой картой **M** не меняется; добавлены Shift+ЛКМ/ПКМ и временный маркер цели. Освещение мира, исследование, сеть и сохранения мира не изменяются. **На сервер мод устанавливать не нужно.**
+Обычное управление большой картой **M** не меняется; добавлены Shift+ЛКМ/ПКМ, временный маркер цели и отключаемые иконки транспорта. Освещение мира, исследование, сеть и сохранения мира не изменяются. **На сервер мод устанавливать не нужно.**
 
 ### Скриншот
 
@@ -204,12 +243,23 @@ StoreAndCraft необязателен; его окно модов (обычно
 
 ### Настройки
 
-Разделы: **1. Общее → 2. Карта → 3. Зум → 4. Клавиши → 5. Компас → 6. HUD → 7. Навигация → 8. Игроки**. В окне StoreAndCraft изменения действуют после **Сохранить**. Закрытие или возврат назад без сохранения отменяет изменения.
+| Раздел | Настройки |
+| --- | --- |
+| **1. Общее** | Мод включён, показывать мини-карту, обе кнопки сброса |
+| **2. Вид карты** | Форма, размер, освещение, вращение, режим вращения |
+| **3. Масштаб и управление** | Min/Max зум, шаг, плавность, отдельный зум корабля, зум клавишами, приблизить/отдалить |
+| **4. Элементы вокруг карты** | Слоты 1–4: Пусто / Биом / Ветер / Координаты; схема их порядка |
+| **5. Компас и навигация** | Направления, линии, тип/толщина/цвет линий, указатель цели; подсказки про управление целью и пинги |
+| **6. Игроки** | Показ никнеймов, размер шрифта, обводка |
+| **7. Транспорт** | Показ транспорта, размер иконок |
+
+Сохранённые значения переносятся автоматически, сбрасывать профиль не нужно. Отдельный зум корабля остаётся в «Масштабе и управлении»: это настройка масштаба, не иконок транспорта. В окне StoreAndCraft изменения действуют после **Сохранить**. Закрытие или возврат назад без сохранения отменяет изменения.
 
 По умолчанию: мод включён, вращение по камере, **круглая карта 130%**, Slot 1 пустой, биом в Slot 2, ветер в Slot 3, Slot 4 пустой, освещение по времени суток. Указатель цели включён, но цель не выбрана. Зум **×0,1–×4**, шаг **×1,5**, плавность и отдельный зум корабля включены. Клавиши `= / −` и NumPad `+ / −`. Буквы компаса включены, линии выключены; линии — пунктир, толщина **0,8**, цвет **`#505050BB`**.
 
 - **Мод включён** — общий выключатель всех функций с сохранением настроек и доступа к F10.
 - **Показывать мини-карту** (раздел «Общее») — скрывает мини-карту, слоты, компас и указатели, но не отключает мод и большую карту M. По умолчанию включено; оба пресета возвращают значение «Включено». Общий выключатель мода имеет приоритет: при выключенном моде возвращается штатная карта.
+- **Показывать транспорт** (раздел «7. Транспорт») — иконки тележек, плотов и кораблей на обеих картах, включая управляемый корабль. По умолчанию включено. Только загруженный рядом транспорт на компонентах Ship/Vagon; без постоянных меток и поиска по всему миру. Выключение самого мода возвращает штатную метку управляемого корабля. Здесь же размер иконок: 5–20, по умолчанию 12.
 - **Сбросить к настройкам игры** — обычный пресет: квадрат 100%, север сверху, дневное освещение, Min 0 / Max 1. Вращение, дополнительные клавиши, плавность, отдельный зум корабля, компас, координаты и указатель цели выключены. Стандартная раскладка слотов, обводки и индикатор зума остаются; полностью штатную карту с исходными положениями биома/ветра возвращает общий выключатель.
 - **Сбросить к настройкам мода** — дефолты выше. **Ни один пресет не меняет общий выключатель**, включая несохранённый ручной выбор.
 - Сбросы применяются после Save и возвращают память масштабов к ×1 с учётом пределов. При выключенном моде сброс масштаба ждёт его ручного включения.
@@ -221,7 +271,7 @@ StoreAndCraft необязателен; его окно модов (обычно
 
 **Слоты:** порядок сверху вниз — Slot 1, Slot 2, мини-карта, Slot 3, Slot 4. Для каждого доступно «Пусто / Биом / Ветер / Координаты»; элементы можно повторять. Пустые слоты не занимают место, отступы компактные. Шрифт биома и размер стрелки ветра остаются штатными; высота строки биома учитывает реальные размеры текста. Выбор «Координаты» сразу показывает X/Y/Z шрифтом 9 единиц с обводкой 3 пикселя; Y — высота игрока в мире. Отдельного переключателя нет. Индикатор зума появляется ниже последнего видимого нижнего слота.
 
-**Никнеймы:** раздел **8. Игроки** — «Показывать никнеймы», «Размер шрифта никнеймов» (**4–20**) и «Обводка никнеймов». По умолчанию включены, размер **8**, обводка **2 пикселя** включена. Текст находится близко под видимой иконкой, без лишнего отступа от прозрачных полей спрайта, и не вращается вместе с картой; у края карты обрезается по её форме. Подписываются только другие игроки, которые делятся позицией; своё имя скрыто. Большая карта и скрытые позиции игроков не меняются. Пресет настроек игры выключает подписи. Ранее сохранённый размер шрифта сохраняется в новых пределах; чтобы использовать новый дефолт в старом профиле, выберите 8 вручную.
+**Никнеймы:** раздел **6. Игроки** — «Показывать никнеймы», «Размер шрифта никнеймов» (**4–20**) и «Обводка никнеймов». По умолчанию включены, размер **8**, обводка **2 пикселя** включена. Текст находится близко под видимой иконкой, без лишнего отступа от прозрачных полей спрайта, и не вращается вместе с картой; у края карты обрезается по её форме. Подписываются только другие игроки, которые делятся позицией; своё имя скрыто. Большая карта и скрытые позиции игроков не меняются. Пресет настроек игры выключает подписи. Ранее сохранённый размер шрифта сохраняется в новых пределах; чтобы использовать новый дефолт в старом профиле, выберите 8 вручную.
 
 **Цель:** откройте M, нажмите Shift+ЛКМ по любой точке, в том числе пустому месту. Повторный Shift+ЛКМ переносит цель. На большой и мини-карте точка обозначается золотым ромбом, за пределами мини-карты — стрелкой; рядом расстояние по горизонтали в метрах. Shift+ПКМ снимает цель и не удаляет метки под курсором. Эти жесты не меняют обычные метки. Выбор не сохраняется в мир и не передаётся другим игрокам; сбрасывается при выключении функции/мода или пересоздании мини-карты.
 

@@ -50,6 +50,8 @@ public sealed class ExternalTextShadow : MonoBehaviour
         var source = _source!;
         var rect = source.rectTransform;
         var pixels = ScreenPixelOffsets.InParent(rect);
+        // Read once: TMP's numeric SetText backing-string getter is stateful in the shipped version.
+        string text = source.text;
         for (int i = 0; i < _copies.Length; i++)
         {
             var copy = _copies[i];
@@ -60,7 +62,7 @@ public sealed class ExternalTextShadow : MonoBehaviour
             // Use the font's base material, not the source's possibly unsupported underlay.
             copy.font = source.font;
             if (source.font) copy.fontSharedMaterial = source.font.material;
-            copy.text = source.text;
+            copy.text = text;
             copy.richText = source.richText;
             copy.maskable = _respectMask && source.maskable;
             copy.isRightToLeftText = source.isRightToLeftText;

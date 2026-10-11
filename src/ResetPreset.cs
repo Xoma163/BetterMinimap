@@ -17,6 +17,7 @@ internal static class ResetPreset
             case "Плавный зум":
             case "Указатель цели":
             case "Показывать никнеймы":
+            case "Показывать транспорт":
             case "Сохранять отдельный зум для кораблей": return false;
             case "Режим": return Enum.Parse(modDefault.GetType(), "NorthUp");
             case "Освещение карты": return Enum.Parse(modDefault.GetType(), "Day");

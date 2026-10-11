@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -134,6 +135,8 @@ internal sealed class HudSpacing : IDisposable
     {
         private readonly RectTransform _root;
         private readonly TextMeshProUGUI _text;
+        private Vector3 _coordinates;
+        private string? _coordinateText;
         private readonly RectTransform _wind;
         private readonly ExternalTextShadow _textShadow;
         private readonly HudContrast _contrast = new HudContrast();
@@ -194,7 +197,16 @@ internal sealed class HudSpacing : IDisposable
                 _text.text = biome ? biome!.text : "";
                 return (float)HudSlots.BiomeHeight(_text.GetPreferredValues(_text.text).y);
             }
-            else _text.SetText("X: {0:0}  Y: {1:0}  Z: {2:0}", Mathf.Round(position.x), Mathf.Round(position.y), Mathf.Round(position.z));
+            var rounded = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), Mathf.Round(position.z));
+            if (_coordinateText == null || rounded != _coordinates)
+            {
+                _coordinates = rounded;
+                _coordinateText = string.Format(CultureInfo.InvariantCulture, "X: {0:0}  Y: {1:0}  Z: {2:0}",
+                    rounded.x, rounded.y, rounded.z);
+            }
+            // TMP's numeric SetText leaves m_text stale after its backing string has been read once.
+            // Use a stable string so ALL outline copies receive the same text, including while idle.
+            _text.text = _coordinateText;
             return Mathf.Max(10, _text.fontSize * 1.2f);
         }
 

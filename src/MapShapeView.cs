@@ -12,8 +12,6 @@ internal sealed class MapShapeView : IDisposable
 {
     private readonly Minimap _map;
     private GameObject? _clip;
-    private Texture2D? _texture;
-    private Sprite? _sprite;
     private bool _mapMaskable;
     private readonly List<Layout> _moved = new List<Layout>();
     private readonly List<Graphic> _hiddenFrames = new List<Graphic>();
@@ -57,25 +55,7 @@ internal sealed class MapShapeView : IDisposable
         rect.anchoredPosition3D = mapRect.anchoredPosition3D;
         rect.localRotation = mapRect.localRotation;
         rect.localScale = mapRect.localScale;
-        const int size = 128;
-        _texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        _texture.wrapMode = TextureWrapMode.Clamp;
-        _texture.filterMode = FilterMode.Bilinear;
-        var pixels = new Color32[size * size];
-        for (int y = 0; y < size; y++)
-        for (int x = 0; x < size; x++)
-        {
-            float dx = x + .5f - size / 2f, dy = y + .5f - size / 2f;
-            byte alpha = (byte)(255 * Mathf.Clamp01(size / 2f - Mathf.Sqrt(dx * dx + dy * dy)));
-            pixels[y * size + x] = new Color32(255, 255, 255, alpha);
-        }
-        _texture.SetPixels32(pixels);
-        _texture.Apply(false, true);
-        _sprite = Sprite.Create(_texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f),
-            100, 0, SpriteMeshType.FullRect);
-        var circle = _clip.AddComponent<Image>();
-        circle.sprite = _sprite;
-        circle.preserveAspect = true;
+        var circle = _clip.AddComponent<MapMaskGraphic>();
         circle.raycastTarget = false;
         _clip.AddComponent<Mask>().showMaskGraphic = false;
 
@@ -87,7 +67,7 @@ internal sealed class MapShapeView : IDisposable
         foreach (var frame in mapRect.parent.GetComponentsInChildren<Graphic>(true))
         {
             if (!frame.enabled || frame.color.a <= 0 || frame == circle || frame == _map.m_mapImageSmall ||
-                frame is TMP_Text || frame is Text || frame is MapBorderGraphic ||
+                frame is TMP_Text || frame is Text || frame is MapBorderGraphic || frame is MapMaskGraphic ||
                 frame.transform.IsChildOf(_map.m_smallMarker) ||
                 frame.transform.IsChildOf(_map.m_smallShipMarker) ||
                 frame.transform.IsChildOf(_map.m_pinRootSmall) ||
@@ -157,9 +137,7 @@ internal sealed class MapShapeView : IDisposable
             _map.m_mapImageSmall.RecalculateMasking();
         }
         if (_clip) { _clip!.SetActive(false); UnityEngine.Object.Destroy(_clip); }
-        if (_sprite) UnityEngine.Object.Destroy(_sprite);
-        if (_texture) UnityEngine.Object.Destroy(_texture);
-        _clip = null; _sprite = null; _texture = null;
+        _clip = null;
     }
 
     private sealed class Layout

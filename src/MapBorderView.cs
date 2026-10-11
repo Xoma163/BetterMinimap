@@ -51,14 +51,14 @@ public sealed class MapBorderGraphic : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
-        Band(vh, -.6f, .9f, new Color32(137, 91, 48, 255));
+        Band(vh, MapFrameGeometry.OuterInset, MapFrameGeometry.InnerInset, new Color32(137, 91, 48, 255));
     }
 
     private void Band(VertexHelper vh, float outerInset, float innerInset, Color32 tint)
     {
         Rect area = rectTransform.rect;
         if (area.width <= 3 || area.height <= 3) return;
-        int segments = _round ? 128 : 4;
+        int segments = _round ? MapFrameGeometry.Segments : 4;
         for (int i = 0; i < segments; i++)
         {
             int start = vh.currentVertCount;
@@ -75,9 +75,8 @@ public sealed class MapBorderGraphic : MaskableGraphic
     {
         if (_round)
         {
-            float angle = index * Mathf.PI * 2 / segments;
-            float radius = Mathf.Min(rect.width, rect.height) / 2 - inset;
-            return rect.center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+            var point = MapFrameGeometry.CirclePoint(rect.width, rect.height, index, inset);
+            return rect.center + new Vector2((float)point.X, (float)point.Y);
         }
         int corner = index % 4;
         return new Vector3(corner == 0 || corner == 3 ? rect.xMin + inset : rect.xMax - inset,

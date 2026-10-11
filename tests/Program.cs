@@ -183,21 +183,60 @@ smooth.Reset(.01);
 Near(smooth.Target, .01);
 Near(smooth.Advance(1, true), .01);
 foreach (string key in new[] { "Мод включён", "Показывать мини-карту", "Вращение", "Режим", "Форма", "Размер мини-карты",
-    "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Указатель цели", "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов", "Min zoom", "Max zoom", "Шаг зума", "Сохранять отдельный зум для кораблей",
+    "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Указатель цели", "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов", "Показывать транспорт", "Размер иконок транспорта", "Min zoom", "Max zoom", "Шаг зума", "Сохранять отдельный зум для кораблей",
     "Плавный зум", "Зум через + и -", "Приблизить", "Отдалить", "Показывать линии компаса",
     "Показывать направления", "Тип линии", "Цвет линии", "Толщина линии", "Освещение карты" })
 {
     Check(SettingsText.HasEntry(key));
-    Check(SettingsText.Name(key, true) == key);
+    Check(SettingsText.Name(key, true) == (key == "Зум через + и -" ? "Зум через доп. клавиши" : key));
     Check(!SettingsText.Name(key, false).Any(c => c >= '\u0400' && c <= '\u04ff'));
     Check(SettingsText.Description(key, true, "MISSING") != "MISSING");
     Check(!SettingsText.Description(key, false, "MISSING").Any(c => c >= '\u0400' && c <= '\u04ff'));
 }
 Check(SettingsText.Section("1. Общее", false) == "1. General");
-Check(SettingsText.Section("2. Карта", false) == "2. Map");
-Check(SettingsText.Section("3. Зум", false) == "3. Zoom");
-Check(SettingsText.Section("4. Клавиши", false) == "4. Shortcuts");
-Check(SettingsText.Section("5. Компас", false) == "5. Compass");
+Check(SettingsText.Section(SettingsLayout.Map, false) == "2. Map appearance");
+Check(SettingsText.Section(SettingsLayout.Zoom, false) == "3. Zoom and controls");
+Check(SettingsText.Section(SettingsLayout.Hud, false) == "4. Around the map");
+Check(SettingsText.Section(SettingsLayout.Navigation, false) == "5. Compass and navigation");
+Check(SettingsText.Section(SettingsLayout.Transport, false) == "7. Transport");
+var settingGroups = new[] {
+    (SettingsLayout.General, new[] { "Мод включён", "Показывать мини-карту" }),
+    (SettingsLayout.Map, new[] { "Форма", "Размер мини-карты", "Освещение карты", "Вращение", "Режим" }),
+    (SettingsLayout.Zoom, new[] { "Min zoom", "Max zoom", "Шаг зума", "Плавный зум", "Сохранять отдельный зум для кораблей", "Зум через + и -", "Приблизить", "Отдалить" }),
+    (SettingsLayout.Hud, new[] { "Slot 1", "Slot 2", "Slot 3", "Slot 4" }),
+    (SettingsLayout.Navigation, new[] { "Показывать направления", "Показывать линии компаса", "Тип линии", "Толщина линии", "Цвет линии", "Указатель цели" }),
+    (SettingsLayout.Players, new[] { "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов" }),
+    (SettingsLayout.Transport, new[] { "Показывать транспорт", "Размер иконок транспорта" })
+};
+Check(settingGroups.Length == 7);
+Check(settingGroups.SelectMany(group => group.Item2).Distinct().Count() == 30);
+foreach (var (section, keys) in settingGroups)
+{
+    Check(SettingsText.Section(section, true) == section);
+    Check(!SettingsText.Section(section, false).Any(c => c >= '\u0400' && c <= '\u04ff'));
+    for (int i = 0; i < keys.Length; i++)
+    {
+        Check(SettingsLayout.SectionFor(keys[i]) == section);
+        Near(SettingsLayout.Order(keys[i]), i);
+        Check(SettingsText.HasEntry(keys[i]));
+    }
+}
+Check(SettingsText.SectionHint(SettingsLayout.Hud, true).Contains("Slot 1 → Slot 2 → мини-карта → Slot 3 → Slot 4"));
+Check(SettingsText.SectionHint(SettingsLayout.Navigation, false).Contains("no separate toggle"));
+Check(SettingsText.SectionHint(SettingsLayout.General, true) == "");
+// Upgrade, restart, partial migration and conflicting old/new values: explicit new values win.
+foreach (bool saved in new[] { false, true })
+{
+    Check(SettingsLayout.MigratedValue(saved, true, false) == saved);
+    Near(SettingsLayout.MigratedValue(saved, 12, 19), saved ? 12 : 19);
+    Near(SettingsLayout.MigratedValue(saved, .25, .75), saved ? .25 : .75);
+    Check(SettingsLayout.MigratedValue(saved, HudSlotContent.Wind, HudSlotContent.Coordinates) ==
+        (saved ? HudSlotContent.Wind : HudSlotContent.Coordinates));
+    Check(SettingsLayout.MigratedValue(saved, "Q + LeftControl", "KeypadPlus") ==
+        (saved ? "Q + LeftControl" : "KeypadPlus"));
+}
+int migratedIconSize = SettingsLayout.MigratedValue(false, 12, 19);
+Near(SettingsLayout.MigratedValue(true, migratedIconSize, 12), 19);
 Check(SettingsText.Choice("MapLighting", "TimeOfDay", true) == "По времени суток");
 Check(SettingsText.Choice("MapLighting", "Night", false) == "Always night");
 Near(MapMath.Daylight(0), 0);
@@ -218,9 +257,10 @@ Check(SettingsText.Choice("HudSlotContent", "Coordinates", false) == "Coordinate
 Check(SettingsText.PanelText("Save", true) == "Сохранить");
 Check(SettingsText.PanelText("Save", false) == "Save");
 Check(SettingsText.Name("unknown", false) == "unknown");
+Check(SettingsText.Name("Зум через + и -", false) == "Zoom with extra keys");
 Check(SettingsText.Description("unknown", false, "fallback") == "fallback");
 foreach (var key in new[] { "Вращение", "Показывать линии компаса", "Показывать направления",
-    "Зум через + и -", "Плавный зум", "Сохранять отдельный зум для кораблей", "Указатель цели", "Показывать никнеймы" })
+    "Зум через + и -", "Плавный зум", "Сохранять отдельный зум для кораблей", "Указатель цели", "Показывать никнеймы", "Показывать транспорт" })
 {
     Check(ResetPreset.Value(key, true, true).Equals(false));
     Check(ResetPreset.Value(key, true, false).Equals(true));
@@ -353,13 +393,13 @@ foreach (double outer in new[] { 10d, 19.2d, 22d, 36d, 56d, 100d })
     Near(HudSlots.CenterOffset(2, inner, 0), -upperInner);
     Near(HudSlots.CenterOffset(3, outer, inner), -upperOuter);
 }
-Check(SettingsText.Section("7. Навигация", false) == "7. Navigation");
+Check(SettingsText.Section(SettingsLayout.Navigation, false) == "5. Compass and navigation");
 Near(HudSlots.Gap, 2);
 Near(HudSlots.CoordinatesFontSize, 9);
 Near(HudSlots.BiomeHeight(16), 26);
 Near(HudSlots.BiomeHeight(31.2), 36);
 Near(HudSlots.BiomeHeight(48), 52);
-Check(SettingsText.Section("8. Игроки", false) == "8. Players");
+Check(SettingsText.Section(SettingsLayout.Players, false) == "6. Players");
 Check(ResetPreset.Value("Размер шрифта никнеймов", PlayerNameLayout.DefaultFontSize, false).Equals(8));
 Near(PlayerNameLayout.DefaultFontSize, 8);
 Near(PlayerNameLayout.MinFontSize, 4);
@@ -459,6 +499,72 @@ foreach (double heading in new[] { 0d, 45d, 90d, 180d, 270d, 359d })
     var dir = MapMath.Rotate(1, 0, heading);
     double angle = (TargetMath.ArrowAngle(dir.X, dir.Y) + 90) * Math.PI / 180;
     Near(Math.Cos(angle), dir.X); Near(Math.Sin(angle), dir.Y);
+}
+// Vehicle icons are real positions, not edge-clamped or saved pins.
+Near(TransportLayout.DefaultIconSize, 12);
+Near(TransportLayout.MinIconSize, 5);
+Near(TransportLayout.MaxIconSize, 20);
+Near(TransportLayout.ClampSize(0), 5);
+Near(TransportLayout.ClampSize(99), 20);
+Check(SettingsText.HasEntry("Размер иконок транспорта"));
+Check(SettingsText.Name("Размер иконок транспорта", false) == "Transport icon size");
+Check(SettingsText.Description("Размер иконок транспорта", true, "").Contains("5–20"));
+foreach (bool vanilla in new[] { false, true })
+    Check(ResetPreset.Value("Размер иконок транспорта", TransportLayout.DefaultIconSize, vanilla).Equals(12));
+for (int size = 5; size <= 20; size++)
+{
+    Check(Math.Abs(TransportLayout.Scale(size) * 18 - size) < .00001);
+    double margin = TransportLayout.EdgeMargin(size);
+    Check(margin >= size * Math.Sqrt(2) / 2);
+    foreach (bool round in new[] { false, true })
+    {
+        Check(TransportLayout.Visible(100 - margin - .01, 0, 200, 200, round, size));
+        Check(!TransportLayout.Visible(100 - margin + .01, 0, 200, 200, round, size));
+    }
+}
+Check(ResetPreset.Value("Показывать транспорт", true, false).Equals(true));
+Check(SettingsText.Name("Показывать транспорт", false) == "Show transport");
+foreach (bool round in new[] { false, true })
+{
+    Check(TransportLayout.Visible(0, 0, 200, 200, round));
+    Check(!TransportLayout.Visible(0, 0, 26, 200, round));
+    Check(!TransportLayout.Visible(0, 0, 200, 0, round));
+    Check(!TransportLayout.Visible(0, 0, -100, 200, round));
+    Check(TransportLayout.Visible(86, 0, 200, 200, round));
+    Check(!TransportLayout.Visible(88, 0, 200, 200, round));
+    Check(!TransportLayout.Visible(0, -88, 200, 200, round));
+    Check(!TransportLayout.Visible(1000, 1000, 200, 200, round));
+    foreach (double heading in new[] { 0d, 45d, 90d, 180d, 270d })
+    {
+        var inside = MapMath.Rotate(30, 40, heading);
+        Check(TransportLayout.Visible(inside.X, inside.Y, 200, 200, round));
+        var outside = MapMath.Rotate(200, 200, heading);
+        Check(!TransportLayout.Visible(outside.X, outside.Y, 200, 200, round));
+    }
+}
+Check(TransportLayout.Visible(80, 80, 200, 200, false));
+Check(!TransportLayout.Visible(80, 80, 200, 200, true));
+// The entire stencil edge lies within the single brown band, including polygon midpoints.
+Check(MapFrameGeometry.OuterInset < MapFrameGeometry.MaskInset);
+Check(MapFrameGeometry.MaskInset < MapFrameGeometry.InnerInset);
+foreach (double size in new[] { 64d, 128d, 256d, 384d, 512d })
+{
+    var first = MapFrameGeometry.CirclePoint(size, size, 0, MapFrameGeometry.MaskInset);
+    var last = MapFrameGeometry.CirclePoint(size, size, MapFrameGeometry.Segments, MapFrameGeometry.MaskInset);
+    Near(first.X, last.X); Near(first.Y, last.Y);
+    for (int i = 0; i < MapFrameGeometry.Segments; i++)
+    foreach (double t in new[] { 0d, .5d, 1d })
+    {
+        double RadiusSquared(double inset)
+        {
+            var a = MapFrameGeometry.CirclePoint(size, size, i, inset);
+            var b = MapFrameGeometry.CirclePoint(size, size, i + 1, inset);
+            double x = a.X + (b.X - a.X) * t, y = a.Y + (b.Y - a.Y) * t;
+            return x * x + y * y;
+        }
+        Check(RadiusSquared(MapFrameGeometry.InnerInset) < RadiusSquared(MapFrameGeometry.MaskInset));
+        Check(RadiusSquared(MapFrameGeometry.MaskInset) < RadiusSquared(MapFrameGeometry.OuterInset));
+    }
 }
 Console.WriteLine($"OK: {checks} geometry/zoom/UI math checks");
 

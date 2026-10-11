@@ -17,7 +17,8 @@ internal static class ModManagerBridge
 {
     private static FieldInfo? _pageField;
     private static FieldInfo? _contentField;
-    private static MethodInfo? _buildPage, _setPending, _makeButton, _endCapture;
+    private static MethodInfo? _buildPage, _setPending, _makeButton, _endCapture, _addText;
+    private static int _presetIndex = -1;
     private static FieldInfo? _saveField, _statusField;
     private static Harmony? _harmony;
     private static bool _available, _resetZoomPending;
@@ -38,6 +39,7 @@ internal static class ModManagerBridge
             var valueText = RequireMethod(panel, "ValueText", typeof(ConfigEntryBase), typeof(object));
             var row = RequireMethod(panel, "AddEntryRow", typeof(ConfigEntryBase));
             var header = RequireMethod(panel, "AddHeader", typeof(string));
+            _addText = RequireMethod(panel, "AddText", typeof(string), typeof(Color), typeof(float));
             var save = RequireMethod(panel, "Save");
             var rebuild = RequireMethod(panel, "Rebuild");
             var close = RequireMethod(panel, "Close");
@@ -61,7 +63,7 @@ internal static class ModManagerBridge
             _harmony.Patch(sliderSet, prefix: Patch(nameof(SnapSlider)));
             _harmony.Patch(valueText, postfix: Patch(nameof(TranslateChoice)));
             _harmony.Patch(row, postfix: Patch(nameof(TranslateRow)));
-            _harmony.Patch(header, prefix: Patch(nameof(TranslateHeader)));
+            _harmony.Patch(header, prefix: Patch(nameof(TranslateHeader)), postfix: Patch(nameof(AddSectionHint)));
             _harmony.Patch(text, postfix: Patch(nameof(TranslatePanelText)));
             _harmony.Patch(save, postfix: Patch(nameof(AfterSave)));
             _harmony.Patch(rebuild, prefix: Patch(nameof(CancelReset)));
@@ -110,7 +112,7 @@ internal static class ModManagerBridge
         ReferenceEquals(entry.ConfigFile, Plugin.Instance.Config);
 
     private static bool ZoomNumber(ConfigEntryBase entry) => Own(entry) &&
-        entry.SettingType == typeof(float) && (entry.Definition.Section == "3. Зум" ||
+        entry.SettingType == typeof(float) && (entry.Definition.Section == SettingsLayout.Zoom ||
             entry.Definition.Key == "Толщина линии");
 
     private static List<ConfigEntryBase>? OwnEntries()
@@ -128,14 +130,15 @@ internal static class ModManagerBridge
         if (OwnEntries() == null || _makeButton == null) return;
         var content = _contentField?.GetValue(null) as RectTransform;
         if (!content) return;
-        AddPresetButton(content!, true);
-        AddPresetButton(content!, false);
+        AddPresetButton(content!, true, _presetIndex);
+        AddPresetButton(content!, false, _presetIndex < 0 ? -1 : _presetIndex + 1);
     }
 
-    private static void AddPresetButton(RectTransform content, bool vanilla)
+    private static void AddPresetButton(RectTransform content, bool vanilla, int siblingIndex)
     {
         var row = new GameObject("BetterMinimapResetDefaults", typeof(RectTransform), typeof(LayoutElement));
         row.transform.SetParent(content, false);
+        if (siblingIndex >= 0) row.transform.SetSiblingIndex(siblingIndex);
         var layout = row.GetComponent<LayoutElement>();
         layout.minHeight = layout.preferredHeight = 54;
         layout.flexibleWidth = 1;
@@ -180,37 +183,14 @@ internal static class ModManagerBridge
     private static void SortPage() => Safe(SortPageCore);
     private static void SortPageCore()
     {
+        _presetIndex = -1;
         var entries = OwnEntries();
         if (entries == null) return;
         entries.Sort((a, b) =>
         {
             int section = string.CompareOrdinal(a.Definition.Section, b.Definition.Section);
-            return section != 0 ? section : Order(a.Definition.Key).CompareTo(Order(b.Definition.Key));
+            return section != 0 ? section : SettingsLayout.Order(a.Definition.Key).CompareTo(SettingsLayout.Order(b.Definition.Key));
         });
-    }
-
-    private static int Order(string key)
-    {
-        switch (key)
-        {
-            case "Мод включён": return -1;
-            case "Показывать мини-карту": return 0;
-            case "Вращение": case "Min zoom": case "Зум через + и -": case "Показывать линии компаса": return 0;
-            case "Режим": case "Max zoom": case "Приблизить": case "Показывать направления": return 1;
-            case "Форма": case "Шаг зума": case "Отдалить": case "Тип линии": return 2;
-            case "Размер мини-карты": case "Сохранять отдельный зум для кораблей": case "Цвет линии": return 3;
-            case "Толщина линии": return 4;
-            case "Освещение карты": return 6;
-            case "Плавный зум": return 4;
-            case "Slot 1": case "Указатель цели": return 0;
-            case "Slot 2": return 1;
-            case "Slot 3": return 2;
-            case "Slot 4": return 3;
-            case "Показывать никнеймы": return 0;
-            case "Размер шрифта никнеймов": return 1;
-            case "Обводка никнеймов": return 2;
-            default: return 100;
-        }
     }
 
     private static void TranslateChoice(ConfigEntryBase __0, object __1, ref string __result)
@@ -230,6 +210,18 @@ internal static class ModManagerBridge
         var description = row.Find("Desc")?.GetComponent<TMP_Text>();
         if (label) label!.text = SettingsText.Name(__0.Definition.Key, UiLanguage.Russian);
         if (description) description!.text = SettingsText.Description(__0.Definition.Key, UiLanguage.Russian, __0.Description.Description);
+        if (__0.Definition.Key == "Показывать мини-карту") _presetIndex = content.childCount;
+    });
+
+    private static void AddSectionHint(string __0) => Safe(() =>
+    {
+        if (OwnEntries() == null || _addText == null) return;
+        foreach (string section in new[] { SettingsLayout.Hud, SettingsLayout.Navigation })
+        {
+            if (__0 != SettingsText.Section(section, UiLanguage.Russian)) continue;
+            _addText.Invoke(null, new object[] { SettingsText.SectionHint(section, UiLanguage.Russian),
+                new Color(.75f, .75f, .75f, 1), 15f });
+        }
     });
 
     private static void TranslateHeader(ref string __0)

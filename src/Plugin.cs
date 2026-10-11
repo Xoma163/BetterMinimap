@@ -18,7 +18,7 @@ public enum WindPosition { Vanilla, TopLeft, TopRight, BottomLeft, BottomRight, 
 public enum CompassLineType { Dashed, Solid }
 public enum MapLighting { TimeOfDay, Day, Night }
 
-[BepInPlugin(Id, "Better Minimap", "1.1.0")]
+[BepInPlugin(Id, "Better Minimap", "1.1.1")]
 [BepInProcess("valheim.exe")]
 [BepInDependency("com.morda.storeandcraft", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
@@ -50,6 +50,10 @@ public sealed class Plugin : BaseUnityPlugin
     private ConfigEntry<bool> _showPlayerNames = null!, _playerNameOutline = null!;
     private ConfigEntry<int> _playerNameSize = null!;
     private PlayerNamesView? _playerNames;
+    private ConfigEntry<bool> _showTransport = null!;
+    private ConfigEntry<int> _transportIconSize = null!;
+    private TransportView? _transport;
+    private PlayerIconLayer? _playerIconLayer;
     private ConfigEntry<bool> _separateShipZoom = null!;
     private ConfigEntry<bool> _smoothZoomEnabled = null!;
     private readonly SmoothZoom _smoothZoom = new SmoothZoom();
@@ -181,6 +185,11 @@ public sealed class Plugin : BaseUnityPlugin
         _lineThickness = RebindSection(_lineThickness, "5. Компас");
         _lighting = Config.Bind("2. Карта", "Освещение карты", MapLighting.TimeOfDay,
             "По времени суток, всегда день или всегда ночь. Только мини-карта, без изменения освещения мира.");
+        _showTransport = Config.Bind("2. Карта", "Показывать транспорт", true,
+            "Тележки, плоты и корабли на мини-карте и большой карте. Только транспорт, загруженный клиентом рядом с игроком, включая модифицированный на компонентах Ship/Vagon. Не сохраняет метки и не ищет транспорт по всему миру.");
+        _transportIconSize = Config.Bind("2. Карта", "Размер иконок транспорта", TransportLayout.DefaultIconSize,
+            new ConfigDescription("Размер иконок тележек, плотов и кораблей на обеих картах: 5–20, по умолчанию 12. Не влияет на иконки игроков.",
+                new AcceptableValueRange<int>(TransportLayout.MinIconSize, TransportLayout.MaxIconSize)));
         var migratedSlots = HudSlots.Migrate(biomePosition.Value.ToString(), windPosition.Value.ToString());
         Config.Remove(biomePosition.Definition);
         Config.Remove(windPosition.Definition);
@@ -204,6 +213,35 @@ public sealed class Plugin : BaseUnityPlugin
                 new AcceptableValueRange<int>(PlayerNameLayout.MinFontSize, PlayerNameLayout.MaxFontSize)));
         _playerNameOutline = Config.Bind("8. Игроки", "Обводка никнеймов", true,
             "Чёрная обводка никнеймов толщиной 2 пикселя. Включается независимо от размера шрифта.");
+        // Finish legacy migrations first, then move the final entries into the seven current groups.
+        // RebindSection retains stored destination values on subsequent launches and removes old keys.
+        _modEnabled = Regroup(_modEnabled);
+        _showMinimap = Regroup(_showMinimap);
+        _shape = Regroup(_shape);
+        _sizePercent = Regroup(_sizePercent);
+        _lighting = Regroup(_lighting);
+        _enabled = Regroup(_enabled);
+        _mode = Regroup(_mode);
+        _minZoom = Regroup(_minZoom);
+        _maxZoom = Regroup(_maxZoom);
+        _zoomStep = Regroup(_zoomStep);
+        _smoothZoomEnabled = Regroup(_smoothZoomEnabled);
+        _separateShipZoom = Regroup(_separateShipZoom);
+        _zoomKeys = Regroup(_zoomKeys);
+        _zoomInKey = Regroup(_zoomInKey);
+        _zoomOutKey = Regroup(_zoomOutKey);
+        for (int i = 0; i < _slots.Length; i++) _slots[i] = Regroup(_slots[i]);
+        _showLetters = Regroup(_showLetters);
+        _showLines = Regroup(_showLines);
+        _lineType = Regroup(_lineType);
+        _lineThickness = Regroup(_lineThickness);
+        _lineColor = Regroup(_lineColor);
+        _targetEnabled = Regroup(_targetEnabled);
+        _showPlayerNames = Regroup(_showPlayerNames);
+        _playerNameSize = Regroup(_playerNameSize);
+        _playerNameOutline = Regroup(_playerNameOutline);
+        _showTransport = Regroup(_showTransport);
+        _transportIconSize = Regroup(_transportIconSize);
         RoundEntry(_minZoom, 0, 20);
         RoundEntry(_maxZoom, .1f, 20);
         RoundEntry(_zoomStep, 1.1f, 3);
@@ -241,11 +279,15 @@ public sealed class Plugin : BaseUnityPlugin
 
     private ConfigEntry<T> RebindSection<T>(ConfigEntry<T> old, string section)
     {
+        if (old.Definition.Section == section) return old;
         var entry = Config.Bind(section, old.Definition.Key, (T)old.DefaultValue, old.Description);
-        if (!_storedKeys.Contains(entry.Definition)) entry.Value = old.Value;
+        entry.Value = SettingsLayout.MigratedValue(_storedKeys.Contains(entry.Definition), entry.Value, old.Value);
         Config.Remove(old.Definition);
         return entry;
     }
+
+    private ConfigEntry<T> Regroup<T>(ConfigEntry<T> entry) =>
+        RebindSection(entry, SettingsLayout.SectionFor(entry.Definition.Key));
 
     private void ReadStoredKeys()
     {
@@ -322,9 +364,13 @@ public sealed class Plugin : BaseUnityPlugin
                 _borderView = new MapBorderView(map);
                 _visibility = new MinimapVisibility(map);
                 _playerNames = new PlayerNamesView(map);
+                _transport = new TransportView(map);
+                _playerIconLayer = new PlayerIconLayer(map);
             }
             _hudSpacing?.BeforeMap();
+            _playerIconLayer?.BeforeMap();
             _pingIndicators?.BeforeMap();
+            _transport?.BeforeMap();
             RestoreMarkers();
             _scaleView?.Apply(_sizePercent.Value);
             if (_shapeView == null) _shapeView = new MapShapeView(map);
@@ -385,6 +431,8 @@ public sealed class Plugin : BaseUnityPlugin
             UpdateNorth(map, active ? _heading : 0f);
             _targetIndicator?.Update(_targetEnabled.Value, active ? _heading : 0, _shape.Value == MapShape.Circle);
             _pingIndicators?.Update(active ? _heading : 0, _shape.Value == MapShape.Circle);
+            _transport?.Update(_showTransport.Value, _showMinimap.Value, _transportIconSize.Value, active ? _heading : 0,
+                _shape.Value == MapShape.Circle);
             if (!active)
             {
                 if (_effect) _effect.SetHeading(0);
@@ -417,8 +465,13 @@ public sealed class Plugin : BaseUnityPlugin
         if (_map.m_windMarker) _map.m_windMarker.rotation = _windRotation;
     }
 
-    private void UpdatePlayerNames() => _playerNames?.Update(_showMinimap.Value && _showPlayerNames.Value,
-        _playerNameSize.Value, _playerNameOutline.Value, _shape.Value == MapShape.Circle);
+    private void UpdatePlayerNames()
+    {
+        _playerNames?.Update(_showMinimap.Value && _showPlayerNames.Value,
+            _playerNameSize.Value, _playerNameOutline.Value, _shape.Value == MapShape.Circle);
+        // Must be last, after names, target, ping and transport overlays and marker rotations.
+        _playerIconLayer?.Update(_showMinimap.Value, _shape.Value == MapShape.Circle);
+    }
 
     internal bool CanSelectTarget(Minimap map) => !_failed && isActiveAndEnabled && _modEnabled.Value &&
         _targetEnabled.Value && _map == map && map.m_mode == Minimap.MapMode.Large && Player.m_localPlayer &&
@@ -580,11 +633,15 @@ public sealed class Plugin : BaseUnityPlugin
 
     private void Release()
     {
+        _playerIconLayer?.Dispose();
+        _playerIconLayer = null;
         RestoreMarkers();
         _visibility?.Dispose();
         _visibility = null;
         _playerNames?.Dispose();
         _playerNames = null;
+        _transport?.Dispose();
+        _transport = null;
         _targetIndicator?.Dispose();
         _targetIndicator = null;
         _pingIndicators?.Dispose();

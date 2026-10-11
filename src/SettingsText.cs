@@ -16,7 +16,9 @@ internal static class SettingsText
         ["Режим"] = ("Orientation", "Север сверху, по камере или по персонажу.", "Keep north up, or follow the camera or character heading."),
         ["Форма"] = ("Shape", "Квадратная или круглая мини-карта.", "Square or circular minimap."),
         ["Освещение карты"] = ("Map lighting", "По времени суток, всегда день или всегда ночь. Освещение мира и большой карты не меняется.", "Follow time of day, always day or always night. Does not affect world or large-map lighting."),
+        ["Показывать транспорт"] = ("Show transport", "Тележки, плоты и корабли на обеих картах, по умолчанию включено. Только загруженные клиентом объекты рядом с игроком, включая модифицированные на компонентах Ship/Vagon. Без сохранения меток и поиска по всему миру.", "Carts, rafts and ships on both maps, enabled by default. Only nearby client-loaded objects, including modded vehicles using Ship/Vagon components. No saved pins or world-wide tracking."),
         ["Размер мини-карты"] = ("Minimap size", "Размер всего блока: 50–150%. При увеличении бафы сдвигаются влево.", "Scale the entire minimap: 50–150%. Enlarging it shifts status effects to the left."),
+        ["Размер иконок транспорта"] = ("Transport icon size", "Размер иконок тележек, плотов и кораблей на обеих картах: 5–20, по умолчанию 12. Не влияет на иконки игроков.", "Cart, raft and ship icon size on both maps: 5–20, default 12. Does not affect player icons."),
         ["Slot 1"] = ("Slot 1", "Верхний дальний слот. Пусто, биом, ветер или координаты; элементы можно повторять.", "Upper outer slot. Empty, biome, wind or coordinates; elements may be repeated."),
         ["Slot 2"] = ("Slot 2", "Слот непосредственно над мини-картой. По умолчанию — биом.", "Slot immediately above the minimap. Default: biome."),
         ["Slot 3"] = ("Slot 3", "Слот непосредственно под мини-картой. По умолчанию — ветер.", "Slot immediately below the minimap. Default: wind."),
@@ -30,7 +32,7 @@ internal static class SettingsText
         ["Шаг зума"] = ("Zoom step", "Множитель ступеней зума, привязанных к ×1. Не меняет шаг штатных клавиш.", "Multiplier between zoom levels anchored at ×1. Does not change the native keys' step."),
         ["Сохранять отдельный зум для кораблей"] = ("Separate ship zoom", "Сохранять масштабы суши и корабля между запусками игры. Общие для миров в этом профиле, включая пассажиров.", "Remember land and ship zoom across game sessions. Shared by worlds in this profile, including passengers."),
         ["Плавный зум"] = ("Smooth zoom", "Плавный переход между масштабами мини-карты.", "Smooth transitions between minimap zoom levels."),
-        ["Зум через + и -"] = ("Zoom with + and -", "Включить клавиши мода и NumPad +/−. Штатные клавиши игры не отключаются.", "Enable this mod's shortcuts and NumPad +/−. Native game shortcuts remain available."),
+        ["Зум через + и -"] = ("Zoom with extra keys", "Включить клавиши мода и NumPad +/−. Штатные клавиши игры не отключаются.", "Enable this mod's shortcuts and NumPad +/−. Native game shortcuts remain available."),
         ["Приблизить"] = ("Zoom in", "Клавиша приближения. По умолчанию = / +; None отключает эту привязку.", "Zoom-in shortcut. Default: = / +. None disables this binding."),
         ["Отдалить"] = ("Zoom out", "Клавиша отдаления. По умолчанию минус; None отключает эту привязку.", "Zoom-out shortcut. Default: minus. None disables this binding."),
         ["Показывать линии компаса"] = ("Show compass lines", "Линии север–юг и запад–восток. Не влияет на буквы.", "North–south and east–west lines. Direction letters are independent."),
@@ -68,7 +70,12 @@ internal static class SettingsText
         }
     }
     public static bool HasEntry(string key) => Entries.ContainsKey(key);
-    public static string Name(string key, bool ru) => !ru && Entries.TryGetValue(key, out var text) ? text.Name : key;
+    public static string Name(string key, bool ru)
+    {
+        // Keep the historical config key so saved values, migration and presets remain compatible.
+        if (ru && key == "Зум через + и -") return "Зум через доп. клавиши";
+        return !ru && Entries.TryGetValue(key, out var text) ? text.Name : key;
+    }
     public static string Description(string key, bool ru, string fallback) =>
         Entries.TryGetValue(key, out var text) ? (ru ? text.Ru : text.En) : fallback;
     public static string Section(string section, bool ru)
@@ -76,16 +83,26 @@ internal static class SettingsText
         if (ru) return section;
         switch (section)
         {
-            case "1. Общее": return "1. General";
-            case "2. Карта": return "2. Map";
-            case "3. Зум": return "3. Zoom";
-            case "4. Клавиши": return "4. Shortcuts";
-            case "5. Компас": return "5. Compass";
-            case "6. HUD": return "6. HUD";
-            case "7. Навигация": return "7. Navigation";
-            case "8. Игроки": return "8. Players";
+            case SettingsLayout.General: return "1. General";
+            case SettingsLayout.Map: return "2. Map appearance";
+            case SettingsLayout.Zoom: return "3. Zoom and controls";
+            case SettingsLayout.Hud: return "4. Around the map";
+            case SettingsLayout.Navigation: return "5. Compass and navigation";
+            case SettingsLayout.Players: return "6. Players";
+            case SettingsLayout.Transport: return "7. Transport";
             default: return section;
         }
+    }
+
+    public static string SectionHint(string section, bool ru)
+    {
+        if (section == SettingsLayout.Hud) return Pick(ru,
+            "Сверху вниз: Slot 1 → Slot 2 → мини-карта → Slot 3 → Slot 4. В каждом: Пусто / Биом / Ветер / Координаты.",
+            "Top to bottom: Slot 1 → Slot 2 → minimap → Slot 3 → Slot 4. Each slot: Empty / Biome / Wind / Coordinates.");
+        if (section == SettingsLayout.Navigation) return Pick(ru,
+            "Пинги: не помещающиеся на мини-карте пинги показаны синими стрелками у края. Отдельного переключателя нет.",
+            "Pings: those that do not fit on the minimap appear as blue edge arrows. There is no separate toggle.");
+        return "";
     }
 
     public static string Choice(string type, string value, bool ru)
