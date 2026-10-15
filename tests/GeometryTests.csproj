@@ -13,6 +13,11 @@
     <Compile Include="../src/SettingsLayout.cs" Link="SettingsLayout.cs" />
     <Compile Include="../src/ResetPreset.cs" Link="ResetPreset.cs" />
     <Compile Include="../src/HudSlots.cs" Link="HudSlots.cs" />
+    <Compile Include="../src/SlotRowLayout.cs" Link="SlotRowLayout.cs" />
+    <Compile Include="../src/GameClock.cs" Link="GameClock.cs" />
+    <Compile Include="../src/HudReadouts.cs" Link="HudReadouts.cs" />
+    <Compile Include="../src/MapOpacity.cs" Link="MapOpacity.cs" />
+    <Compile Include="../src/TransparencyFallback.cs" Link="TransparencyFallback.cs" />
     <Compile Include="../src/TargetMath.cs" Link="TargetMath.cs" />
     <Compile Include="../src/PlayerNameLayout.cs" Link="PlayerNameLayout.cs" />
     <Compile Include="../src/TransportLayout.cs" Link="TransportLayout.cs" />

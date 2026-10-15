@@ -210,8 +210,45 @@ internal static class ModManagerBridge
         var description = row.Find("Desc")?.GetComponent<TMP_Text>();
         if (label) label!.text = SettingsText.Name(__0.Definition.Key, UiLanguage.Russian);
         if (description) description!.text = SettingsText.Description(__0.Definition.Key, UiLanguage.Russian, __0.Description.Description);
+        if (__0.Definition.Section == SettingsLayout.Hud) CompactSlotRow(__0, content, row);
         if (__0.Definition.Key == "Показывать мини-карту") _presetIndex = content.childCount;
     });
+
+    private static void CompactSlotRow(ConfigEntryBase entry, RectTransform content, Transform row)
+    {
+        if (entry.SettingType == typeof(HudSlotContent))
+        {
+            row.name = "BetterMinimap" + entry.Definition.Key;
+            return;
+        }
+        if (!HudSlots.TryGetTextSizeSlot(entry.Definition.Key, out int slot)) return;
+        // Search backwards: reset rebuilds destroy old inactive rows at end of frame.
+        Transform? contentRow = null;
+        for (int i = content.childCount - 1; i >= 0; i--)
+        {
+            var candidate = content.GetChild(i);
+            if (candidate.gameObject.activeSelf && candidate.name == "BetterMinimapSlot " + (slot + 1))
+            { contentRow = candidate; break; }
+        }
+        if (!contentRow || contentRow!.GetComponent<SlotSettingsRow>()) return;
+        var label = contentRow.Find("Label") as RectTransform;
+        var choice = contentRow.Find("Widget") as RectTransform;
+        var sizeLabel = row.Find("Label") as RectTransform;
+        var sizeWidget = row.Find("Widget") as RectTransform;
+        if (!label || !choice || !sizeLabel || !sizeWidget || !contentRow.GetComponent<LayoutElement>()) return;
+        var description = contentRow.Find("Desc");
+        if (description) description.gameObject.SetActive(false);
+        foreach (var text in new[] { label!.GetComponent<TMP_Text>(), sizeLabel!.GetComponent<TMP_Text>() })
+        {
+            if (!text) continue;
+            text!.alignment = TextAlignmentOptions.MidlineLeft;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+        }
+        contentRow.gameObject.AddComponent<SlotSettingsRow>().Initialize(label!, choice!, sizeLabel!, sizeWidget!);
+        row.gameObject.SetActive(false);
+        UnityEngine.Object.Destroy(row.gameObject);
+    }
 
     private static void AddSectionHint(string __0) => Safe(() =>
     {

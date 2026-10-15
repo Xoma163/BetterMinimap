@@ -4,6 +4,20 @@
 
 [Releases](https://github.com/Xoma163/BetterMinimap/releases) · [Report a bug](https://github.com/Xoma163/BetterMinimap/issues) · [Русский](#русский)
 
+<details>
+<summary>What's new in 1.2.0</summary>
+
+Changes since **1.1.1**, combining the unpublished local test builds:
+
+- **Slot 5 and Slot 6** below Slot 4, empty by default: six slots total, with existing choices preserved.
+- **Per-slot size:** independent 25–400% sliders, default 100%, including biome and wind. All slot texts share the native biome font size at 100%, so coordinates are no longer smaller by default; outline widths are unchanged. Content and size share one compact settings row (two lines on narrow windows).
+- **In-game time**, **Real time** and **Weight** in any HUD slot: game/computer clocks in **HH:mm**, e.g. `14:35`, and carry weight as **current / maximum**, e.g. `124 / 300`. Existing slot defaults are unchanged.
+- **Map transparency (%)** in Map appearance: **0–100%**, default **0%**. Only the minimap background fades; markers, border, compass, labels and the large map remain unchanged.
+- If transparency rendering fails, the background becomes opaque while other features keep working. The saved value is retained; save 0%, then your desired value to retry. The log records one warning per failure, not every frame.
+- These features are client-side. See [CHANGELOG.md](CHANGELOG.md) and the [manual test checklist](docs/testing-hud-navigation.md).
+
+</details>
+
 ## What's new in 1.1.1
 
 Changes since **1.1.0**:
@@ -38,8 +52,12 @@ Changes since **1.0.1**:
 - **Zoom:** smooth transitions, configurable limits and shortcuts. Custom zoom levels are anchored at ×1, so reaching a limit does not shift the scale.
 - **Ship zoom:** separate land/ship magnifications, shared by worlds and characters in the same profile and saved between game sessions. Works for passengers too.
 - **Compass:** independently toggle letters and lines; choose solid/dashed lines, color and thickness.
-- **HUD slots:** two centered slots above the minimap and two below. Assign biome, wind, coordinates or nothing to each slot. External outlines improve readability.
-- **Coordinates:** compact X/Y/Z coordinates in meters. Select Coordinates in any HUD slot to show them; there is no separate switch.
+- **HUD slots:** two centered slots above the minimap and four below. Assign biome, wind, coordinates, in-game time, weight, real time or nothing to each slot. External outlines improve readability.
+- **Individual slot sizes:** 25–400% per slot, including biome and wind. At 100%, text uses the native biome font size and wind its native size.
+- **Clocks:** separate 24-hour HH:mm options for the world's solar day/night cycle and the computer's local time; neither shows session duration.
+- **Weight:** current inventory weight / current carrying capacity, including carry-weight bonuses; rounded up like the native inventory.
+- **Transparency:** fade only the minimap background, 0–100%, default 0%; markers, border and text stay readable.
+- **Coordinates:** X/Y/Z coordinates in meters, sized independently per slot. Select Coordinates in any HUD slot to show them; there is no separate switch.
 - **Waypoint:** Shift+left-click anywhere on the large map to set a target; Shift+right-click to clear. The minimap shows the target and horizontal distance, with an edge arrow when it is off-screen.
 - **Edge pings:** pings that do not fit on the minimap become blue directional arrows at its edge until the native ping expires. Fully visible pings keep their normal ring icons.
 - **Visibility:** General → Show minimap hides the small map and its entire HUD block; the large M map remains available.
@@ -74,9 +92,9 @@ In StoreAndCraft's mod settings window (usually **F10**), choose **Better Minima
 | Section | Settings |
 | --- | --- |
 | **1. General** | Enable mod, show minimap, both reset buttons |
-| **2. Map appearance** | Shape, size, lighting, rotation, orientation |
+| **2. Map appearance** | Shape, size, lighting, transparency, rotation, orientation |
 | **3. Zoom and controls** | Min/Max zoom, step, smoothing, separate ship zoom, keyboard zoom, zoom-in/out keys |
-| **4. Around the map** | Slots 1–4: Empty / Biome / Wind / Coordinates; slot-order diagram |
+| **4. Around the map** | Slots 1–6: Empty / Biome / Wind / Coordinates / In-game time / Weight / Real time; individual size for each slot; slot-order diagram |
 | **5. Compass and navigation** | Directions, lines, line style/thickness/color, target indicator; waypoint controls and ping help |
 | **6. Players** | Show names, name font size, name outline |
 | **7. Transport** | Show transport, transport icon size |
@@ -91,8 +109,11 @@ Saved values are moved into these sections automatically; there is no need to re
 | Transport icon size | 12 (range 5–20); player icons unchanged |
 | Rotation | Camera up |
 | Shape / size | Circle / 130% |
-| Slots 1 / 2 / 3 / 4 | Empty / biome / wind / empty |
+| Slots 1 / 2 / 3 / 4 / 5 / 6 | Empty / biome / wind / empty / empty / empty |
 | Coordinates | Not assigned to a slot |
+| In-game time / Real time / Weight | Not assigned to a slot; same base font size as biome, 2-pixel outline |
+| Slot 1–6 text size | 100% each (range 25–400%); all text contents and wind |
+| Map transparency | 0% (opaque); range 0–100% |
 | Target indicator | On; no target selected |
 | Player names / font size / outline | On / 8 / on (2 pixels) |
 | Lighting | Time of day |
@@ -104,6 +125,7 @@ Saved values are moved into these sections automatically; there is no need to re
 | Line style / thickness / color | Dashed / 0.8 / `#505050BB` |
 
 - **Enable mod:** switches off all mod features without losing settings. The settings window remains available.
+- **Map transparency (%)** (Map appearance): 0% leaves the background opaque, 100% hides it completely. Only terrain and its backing fade; icons, border, compass and slot labels keep their own opacity. The large map is unaffected. Both presets restore 0%. At 1–99%, a separate terrain-rendering pass is used; at 100%, terrain is hidden without that pass. At 0%, the original rendering path is retained and extra rendering resources are released.
 - **Show minimap** (General): hides the small map, slots, compass and overlays without disabling the mod or the large M map. Enabled by default; both reset presets restore it to On. The master mod switch takes precedence and restores the native map when disabled.
 - **Show transport** (7. Transport): controls all vehicle icons, including the controlled ship, on both maps. Carts use a wheeled icon; rafts/ships use a sailboat icon. Only currently loaded Ship/Vagon objects are shown, not distant unloaded vehicles. No saved pins are created. Disabling the master mod switch restores the native controlled-ship marker. Icon size is configured here too: 5–20, default 12.
 - **Reset to Vanilla:** stages a vanilla-like preset: square, 100%, north up, daytime lighting, Min 0 / Max 1, and custom rotation, zoom keys, smoothing, ship zoom, compass, coordinates and target indicator disabled. It is only a preset, not a locked mode. The default slot layout, outlines and zoom indicator remain while the mod is enabled. Use the master switch for a completely unmodified minimap, including its original biome/wind positions.
@@ -123,15 +145,27 @@ Slot 2  (biome)
 [ minimap ]
 Slot 3  (wind)
 Slot 4  (empty)
+Slot 5  (empty)
+Slot 6  (empty)
 ```
 
-Each slot offers **Empty / Biome / Wind / Coordinates**. Elements can be repeated. Empty slots take no space; filled slots use compact spacing. The biome font and wind arrow retain their native sizes; the biome row reserves enough height for its actual font metrics. Select **Coordinates** to immediately show X/Y/Z with a 9-unit font and a 3-pixel outline; select **Empty** to hide them. Y is the player's world height. There is no separate coordinate toggle. The temporary zoom label appears below the last visible lower slot.
+Each slot offers **Empty / Biome / Wind / Coordinates / In-game time / Weight / Real time**. Elements can be repeated. Empty slots take no space; filled slots use compact spacing. At 100%, every text content uses the native biome font size and wind uses its native size. Select **Coordinates** to show X/Y/Z with a 3-pixel outline; select **Empty** to hide them. Y is the player's world height. There is no separate coordinate toggle. The temporary zoom label appears below the last visible lower slot. Slot changes apply after Save.
+
+**Clocks and weight** use white text with a 2-pixel outline, without a background rectangle. **In-game time** follows the game's solar time in **HH:mm** (including native smoothing during sleep/time changes), independently of minimap lighting. Day and night have different real-time lengths, so displayed minutes need not advance at a constant real-time rate. **Real time** displays the computer's local 24-hour clock in **HH:mm**, not server time or session duration. **Weight** displays the local player's current inventory weight and actual carry capacity, e.g. `124 / 300`, including equipment/status-effect bonuses and the game's carry-weight multiplier. Both numbers are rounded up like the native inventory; overload is not clamped to capacity. All three options are off until assigned to a slot; both presets retain the original slot layout. Existing `Time` config values still select the in-game clock.
 
 **Players:** names are enabled by default, with font size **8** (range **4–20**) and a **2-pixel** outline. Change these independently in **6. Players**. Names stay horizontal and close below the visible icon, discounting the sprite's transparent margins, and clip at the minimap boundary. Only the game's existing other public-position players are labeled; your own name is hidden and private player locations are not discovered. The large map is unchanged. The vanilla-like preset disables these labels. Existing saved font sizes are retained within the new bounds; select 8 manually to adopt the new default in an existing profile.
 
 With **Target indicator** enabled, open **M** and **Shift+left-click any point**, including empty map space, to set or move a waypoint. A gold diamond shows the selected point on the large map and minimap; an edge arrow indicates an off-screen minimap target. Distance is measured horizontally in meters. **Shift+right-click** the large map to clear the waypoint without deleting a pin below the cursor. Ordinary clicks, pin checking, deletion and double-click creation retain their native behavior; the waypoint gestures do not modify pins. Selection is local to this session and clears when the feature/mod is disabled or the minimap is recreated. It is not saved or shared with other players.
 
 Selecting a waypoint displays a confirmation such as **Target selected (350 m)** with rounded horizontal distance. Player ping rings that would cross the minimap border become blue arrows of the same shape as the gold waypoint arrow, following map rotation and shape. Fully visible pings remain native; edge indicators disappear with the game's ping lifetime and do not create extra network messages.
+
+### Per-slot text size
+
+In **Around the map**, each slot has its own **Slot N text size** slider: **25–400%, default 100%**. In StoreAndCraft, the content selector and size share one compact row with no per-slot description; narrow windows use two lines. Every text content (including biome) uses the same base font size — the native biome label's size. Thus at 100% coordinates, weight, clocks and biome have equal font sizes. Repeated content in another slot can have a different percentage.
+
+The slider also scales the wind arrow from its native size: 25% is one quarter, 400% four times the size. Empty remains empty. Outline widths remain 3 pixels for coordinates and 2 for other text. Row height and the zoom popup position adapt to the text or wind diagonal. Text does not wrap or automatically shrink horizontally: reduce this slot's percentage if long coordinates/biome names or modded weights extend beyond the available width.
+
+Changes apply after **Save**; Close/Back cancels them. Each size is saved independently of the slot content, including across restarts. Both reset presets return all six sizes to 100% without changing the master enable switch. Profiles upgraded from 1.1.1 start at 100% and retain their selected contents; saved sizes from local test builds are preserved. Coordinates are therefore larger than in 1.1.1 by default: reduce only their slot's percentage if you prefer compact text.
 
 ### Configuration and zoom memory
 
@@ -166,7 +200,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1
 Output: `bin/Release/net48/BetterMinimap.dll`; installable ZIP: `artifacts/`.
 Packaging uses Windows PowerShell/System.Drawing. A private `local.props` may supply local reference paths and is ignored by Git.
 
-Automated checks cover geometry, target clamping, slot spacing/migration, viewport fitting, zoom levels and transitions, presets, localization strings and zoom-memory file I/O. **They do not launch Unity or replace in-game testing** of UI, input, clipping, lighting, resolution changes or compatibility. See [the manual test checklist](docs/testing-hud-navigation.md). Report bugs with game/mod versions, reproduction steps and screenshots; remove private data from any attached logs/configs.
+Automated checks cover geometry, target clamping, six-slot spacing and size calculations, migration helpers, clock/weight formatting, transparency conversion and failure handling, viewport fitting, zoom levels and transitions, presets, localization strings and zoom-memory file I/O. **They do not launch Unity or replace in-game testing** of UI, input, clipping, lighting, resolution changes or compatibility. See [the manual test checklist](docs/testing-hud-navigation.md). Report bugs with game/mod versions, reproduction steps and screenshots; remove private data from any attached logs/configs.
 
 ## License and acknowledgements
 
@@ -179,6 +213,20 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 ## Русский
 
 **Better Minimap — клиентский мод мини-карты Valheim от AndrewSha.**
+
+<details>
+<summary>Что изменилось в 1.2.0</summary>
+
+Изменения относительно **1.1.1**, объединяющие неопубликованные локальные тестовые сборки:
+
+- **Slot 5 и Slot 6** ниже Slot 4, по умолчанию пустые: всего шесть слотов, прежние значения сохраняются.
+- **Отдельный размер каждого слота:** 25–400%, по умолчанию 100%, включая биом и ветер. При 100% все тексты имеют штатный размер шрифта биома, координаты больше не уменьшены по умолчанию; обводки не меняются. Содержимое и размер — в одной компактной строке настроек (две строки на узком окне).
+- **«Игровое время»**, **«Реальное время»** и **«Вес»** в любом слоте: игровые/системные часы **HH:mm**, например `14:35`, и вес **текущий / максимальный**, например `124 / 300`. Прежние значения слотов по умолчанию сохранены.
+- **«Прозрачность карты»** в «Виде карты»: **0–100%**, по умолчанию **0%**. Меняется только фон мини-карты; значки, рамка, компас, подписи и большая карта не меняются.
+- При сбое отрисовки прозрачности фон становится непрозрачным, остальные функции продолжают работать. Значение настройки сохраняется; для повтора сохраните 0%, затем нужное значение. В лог записывается одно предупреждение при сбое, не каждый кадр.
+- Все функции работают на клиенте. Подробности — в [CHANGELOG.md](CHANGELOG.md) и [ручном checklist](docs/testing-hud-navigation.md).
+
+</details>
 
 ### Что изменилось в 1.1.1
 
@@ -214,8 +262,12 @@ The implementation and generated compass icon are original. [Banderi/ValheimMini
 - Плавный зум, свои клавиши и пределы. Ступени привязаны к ×1 и не смещаются после достижения Min/Max.
 - Отдельные масштабы суши и корабля с сохранением между запусками игры, в том числе для пассажиров.
 - Независимые линии и буквы компаса; цвет, толщина и сплошной/пунктирный тип линий.
-- Четыре слота: два над мини-картой и два под ней. В каждом — биом, ветер, координаты или пусто. Ветер только по центру; внешние обводки.
-- Координаты X/Y/Z в метрах, уменьшенный шрифт. Появляются при выборе «Координаты» в любом слоте, без отдельного переключателя.
+- Шесть слотов: два над мини-картой и четыре под ней. В каждом — биом, ветер, координаты, игровое время, вес, реальное время или пусто. Ветер только по центру; внешние обводки.
+- Индивидуальный размер каждого слота: 25–400%, включая биом и ветер. При 100% у текстов штатный размер шрифта биома, у ветра — штатный размер стрелки.
+- Два отдельных варианта часов HH:mm в 24-часовом формате: игровое солнечное время и местное время компьютера — не длительность сеанса.
+- Вес инвентаря / текущая грузоподъёмность с учётом бонусов; округление вверх, как в штатном инвентаре.
+- Прозрачность только фона мини-карты: 0–100%, по умолчанию 0%; значки, рамка и текст сохраняют читаемость.
+- Координаты X/Y/Z в метрах с индивидуальным размером в каждом слоте. Появляются при выборе «Координаты» в любом слоте, без отдельного переключателя.
 - Shift+ЛКМ по любой точке большой карты — указать цель, Shift+ПКМ — снять. На мини-карте — указатель, расстояние и стрелка у края для далёкой цели.
 - Не помещающиеся на мини-карте пинги игроков заменяются синими стрелками у края до истечения штатного времени пинга.
 - «Общее → Показывать мини-карту» скрывает мини-карту и весь её блок; большая карта M остаётся доступной.
@@ -246,18 +298,19 @@ StoreAndCraft необязателен; его окно модов (обычно
 | Раздел | Настройки |
 | --- | --- |
 | **1. Общее** | Мод включён, показывать мини-карту, обе кнопки сброса |
-| **2. Вид карты** | Форма, размер, освещение, вращение, режим вращения |
+| **2. Вид карты** | Форма, размер, освещение, прозрачность, вращение, режим вращения |
 | **3. Масштаб и управление** | Min/Max зум, шаг, плавность, отдельный зум корабля, зум клавишами, приблизить/отдалить |
-| **4. Элементы вокруг карты** | Слоты 1–4: Пусто / Биом / Ветер / Координаты; схема их порядка |
+| **4. Элементы вокруг карты** | Слоты 1–6: Пусто / Биом / Ветер / Координаты / Игровое время / Вес / Реальное время; индивидуальный размер каждого слота; схема порядка |
 | **5. Компас и навигация** | Направления, линии, тип/толщина/цвет линий, указатель цели; подсказки про управление целью и пинги |
 | **6. Игроки** | Показ никнеймов, размер шрифта, обводка |
 | **7. Транспорт** | Показ транспорта, размер иконок |
 
 Сохранённые значения переносятся автоматически, сбрасывать профиль не нужно. Отдельный зум корабля остаётся в «Масштабе и управлении»: это настройка масштаба, не иконок транспорта. В окне StoreAndCraft изменения действуют после **Сохранить**. Закрытие или возврат назад без сохранения отменяет изменения.
 
-По умолчанию: мод включён, вращение по камере, **круглая карта 130%**, Slot 1 пустой, биом в Slot 2, ветер в Slot 3, Slot 4 пустой, освещение по времени суток. Указатель цели включён, но цель не выбрана. Зум **×0,1–×4**, шаг **×1,5**, плавность и отдельный зум корабля включены. Клавиши `= / −` и NumPad `+ / −`. Буквы компаса включены, линии выключены; линии — пунктир, толщина **0,8**, цвет **`#505050BB`**.
+По умолчанию: мод включён, вращение по камере, **круглая карта 130%**, Slot 1 пустой, биом в Slot 2, ветер в Slot 3, Slot 4–6 пустые, освещение по времени суток. Указатель цели включён, но цель не выбрана. Зум **×0,1–×4**, шаг **×1,5**, плавность и отдельный зум корабля включены. Клавиши `= / −` и NumPad `+ / −`. Буквы компаса включены, линии выключены; линии — пунктир, толщина **0,8**, цвет **`#505050BB`**.
 
 - **Мод включён** — общий выключатель всех функций с сохранением настроек и доступа к F10.
+- **Прозрачность карты** («Вид карты»): **0%** — непрозрачный фон (по умолчанию), **100%** — фон невидим. Значки, рамка, компас и подписи слотов сохраняют свою прозрачность; большая карта не меняется. Оба пресета возвращают 0%. При 1–99% используется отдельный проход отрисовки фона; при 100% фон скрыт без этого прохода. При 0% — прежняя отрисовка с освобождением дополнительных графических ресурсов.
 - **Показывать мини-карту** (раздел «Общее») — скрывает мини-карту, слоты, компас и указатели, но не отключает мод и большую карту M. По умолчанию включено; оба пресета возвращают значение «Включено». Общий выключатель мода имеет приоритет: при выключенном моде возвращается штатная карта.
 - **Показывать транспорт** (раздел «7. Транспорт») — иконки тележек, плотов и кораблей на обеих картах, включая управляемый корабль. По умолчанию включено. Только загруженный рядом транспорт на компонентах Ship/Vagon; без постоянных меток и поиска по всему миру. Выключение самого мода возвращает штатную метку управляемого корабля. Здесь же размер иконок: 5–20, по умолчанию 12.
 - **Сбросить к настройкам игры** — обычный пресет: квадрат 100%, север сверху, дневное освещение, Min 0 / Max 1. Вращение, дополнительные клавиши, плавность, отдельный зум корабля, компас, координаты и указатель цели выключены. Стандартная раскладка слотов, обводки и индикатор зума остаются; полностью штатную карту с исходными положениями биома/ветра возвращает общий выключатель.
@@ -269,7 +322,9 @@ StoreAndCraft необязателен; его окно модов (обычно
 - Толщина линий — **0,1–3**, цвет — `#RRGGBB` или `#RRGGBBAA`.
 - Блок автоматически сдвигается по вертикали, чтобы слоты не выходили за экран. Если он целиком выше доступного пространства, уменьшите размер HUD/мини-карты.
 
-**Слоты:** порядок сверху вниз — Slot 1, Slot 2, мини-карта, Slot 3, Slot 4. Для каждого доступно «Пусто / Биом / Ветер / Координаты»; элементы можно повторять. Пустые слоты не занимают место, отступы компактные. Шрифт биома и размер стрелки ветра остаются штатными; высота строки биома учитывает реальные размеры текста. Выбор «Координаты» сразу показывает X/Y/Z шрифтом 9 единиц с обводкой 3 пикселя; Y — высота игрока в мире. Отдельного переключателя нет. Индикатор зума появляется ниже последнего видимого нижнего слота.
+**Слоты:** порядок сверху вниз — Slot 1, Slot 2, мини-карта, Slot 3, Slot 4, Slot 5, Slot 6. Для каждого доступно «Пусто / Биом / Ветер / Координаты / Игровое время / Вес / Реальное время»; элементы можно повторять. Пустые слоты не занимают место, отступы компактные. При 100% все тексты имеют штатный размер шрифта биома, а стрелка ветра — свой штатный размер. «Координаты» показывают X/Y/Z с обводкой 3 пикселя; Y — высота игрока в мире. Отдельного переключателя нет. Индикатор зума появляется ниже последнего видимого нижнего слота. Изменения слотов применяются после «Сохранить».
+
+**Часы и вес:** белый текст, обводка **2 пикселя**, без подложки. **«Игровое время»** — солнечные часы **HH:mm**, включая штатное сглаживание после сна/смены времени, независимо от настройки освещения мини-карты. День и ночь имеют разную реальную длительность, поэтому игровые минуты могут идти с разной скоростью. **«Реальное время»** — местные 24-часовые часы компьютера **HH:mm**, не время сервера и не длительность сеанса. **«Вес»** — текущий вес инвентаря своего игрока / текущая грузоподъёмность, например `124 / 300`, с учётом экипировки, эффектов и игрового множителя переносимого веса. Оба числа округляются вверх, как в штатном инвентаре; перегруз не ограничивается значением максимума. По умолчанию все три варианта не назначены ни в один слот; оба пресета возвращают прежнюю раскладку. Сохранённый `Time` в конфиге по-прежнему означает игровые часы.
 
 **Никнеймы:** раздел **6. Игроки** — «Показывать никнеймы», «Размер шрифта никнеймов» (**4–20**) и «Обводка никнеймов». По умолчанию включены, размер **8**, обводка **2 пикселя** включена. Текст находится близко под видимой иконкой, без лишнего отступа от прозрачных полей спрайта, и не вращается вместе с картой; у края карты обрезается по её форме. Подписываются только другие игроки, которые делятся позицией; своё имя скрыто. Большая карта и скрытые позиции игроков не меняются. Пресет настроек игры выключает подписи. Ранее сохранённый размер шрифта сохраняется в новых пределах; чтобы использовать новый дефолт в старом профиле, выберите 8 вручную.
 
@@ -279,10 +334,16 @@ StoreAndCraft необязателен; его окно модов (обычно
 
 **Пинги:** если круг пинга не помещается на мини-карте, у края появляется синяя стрелка такой же формы, как у жёлтой цели, с учётом формы карты и вращения. Полностью видимые пинги остаются штатными; стрелка исчезает вместе с пингом, не продлевая его время и не отправляя новых сообщений.
 
+**Размер каждого слота:** в «Элементах вокруг карты» — **«Размер текста слот N»**, **25–400%, по умолчанию 100%**. В StoreAndCraft выбор содержимого и размер объединены в одну строку без длинных описаний под слотами; на узком окне — две компактные строки. Все тексты, включая биом, имеют общий базовый размер — штатный размер шрифта биома. Поэтому при 100% координаты, вес, часы и биом одинакового размера. У разных слотов могут быть разные проценты.
+
+Ползунок меняет также стрелку ветра: 25% — четверть штатного размера, 400% — в четыре раза больше. Пустой слот остаётся пустым. Обводки остаются прежними: координаты 3 пикселя, остальные тексты 2. Высота строк и положение индикатора зума учитывают текст или диагональ стрелки. Горизонтальный перенос и автоматическое уменьшение текста не включаются: если длинные координаты, название биома или модифицированный вес не помещаются, уменьшите размер соответствующего слота.
+
+Размер применяется после **«Сохранить»**; закрытие/возврат отменяет несохранённые изменения. Значение сохраняется независимо от содержимого и после перезапуска. Оба пресета возвращают все шесть размеров к 100%, не меняя общий выключатель. При обновлении с 1.1.1 размеры начинаются со 100%, выбранное содержимое остаётся прежним; размеры из локальных тестовых сборок сохраняются. Поэтому по умолчанию координаты крупнее, чем в 1.1.1: для компактного текста уменьшите процент только их слота.
+
 Конфиг: `BepInEx/config/net.shtab.rotatingminimap.cfg`. Редактировать вручную при закрытой игре. При обновлении выбранные значения сохраняются, старые разделы мигрируют. Старые положения биома/ветра переносятся в слоты; угловой ветер становится центральным на той же стороне. Уже сохранённые настройки слотов имеют приоритет. При обновлении с тестовой 1.1.0 скрытые старым переключателем координаты становятся пустыми слотами, включённые сохраняются. Устаревший переключатель удаляется.
 
 Память масштабов: `BepInEx/config/net.shtab.rotatingminimap.cfg.zoom`. Записывается автоматически; общая для миров, персонажей и кораблей внутри профиля. При первом включении без памяти оба масштаба берутся из текущего; настройте корабельный масштаб после посадки. При следующих входах восстанавливается подходящее значение с учётом Min/Max.
 
-Для сборки нужны .NET SDK 8 и DLL своего клиента; команды приведены в английском разделе. Автотесты проверяют математику, пресеты, переводы и файл памяти, но не запускают Unity. В багрепорте укажите версии, шаги воспроизведения и скриншоты; удалите личные данные из логов и конфигов.
+Для сборки нужны .NET SDK 8 и DLL своего клиента; команды приведены в английском разделе. Автотесты проверяют математику, раскладку и размеры шести слотов, helper-функции миграции, часы/вес, расчёт прозрачности и обработку сбоев, пресеты, переводы и файл памяти, но не запускают Unity. Отрисовку, ввод и совместимость проверяйте по [ручному checklist](docs/testing-hud-navigation.md). В багрепорте укажите версии, шаги воспроизведения и скриншоты; удалите личные данные из логов и конфигов.
 
 Лицензия **MIT**, автор **AndrewSha**.

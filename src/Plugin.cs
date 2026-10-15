@@ -18,7 +18,7 @@ public enum WindPosition { Vanilla, TopLeft, TopRight, BottomLeft, BottomRight, 
 public enum CompassLineType { Dashed, Solid }
 public enum MapLighting { TimeOfDay, Day, Night }
 
-[BepInPlugin(Id, "Better Minimap", "1.1.1")]
+[BepInPlugin(Id, "Better Minimap", "1.2.0")]
 [BepInProcess("valheim.exe")]
 [BepInDependency("com.morda.storeandcraft", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
@@ -40,9 +40,13 @@ public sealed class Plugin : BaseUnityPlugin
     private ConfigEntry<MapShape> _shape = null!;
     private ConfigEntry<MapLighting> _lighting = null!;
     private MapLightingView? _lightingView;
+    private ConfigEntry<int> _mapTransparency = null!;
+    private MapTransparencyView? _transparencyView;
     private ConfigEntry<int> _sizePercent = null!;
-    private readonly ConfigEntry<HudSlotContent>[] _slots = new ConfigEntry<HudSlotContent>[4];
-    private readonly HudSlotContent[] _slotContents = new HudSlotContent[4];
+    private readonly ConfigEntry<HudSlotContent>[] _slots = new ConfigEntry<HudSlotContent>[HudSlots.Count];
+    private readonly HudSlotContent[] _slotContents = new HudSlotContent[HudSlots.Count];
+    private readonly ConfigEntry<int>[] _slotTextSizes = new ConfigEntry<int>[HudSlots.Count];
+    private readonly int[] _slotTextPercents = new int[HudSlots.Count];
     private ConfigEntry<bool> _targetEnabled = null!;
     private TargetIndicator? _targetIndicator;
     private PingIndicators? _pingIndicators;
@@ -185,6 +189,9 @@ public sealed class Plugin : BaseUnityPlugin
         _lineThickness = RebindSection(_lineThickness, "5. Компас");
         _lighting = Config.Bind("2. Карта", "Освещение карты", MapLighting.TimeOfDay,
             "По времени суток, всегда день или всегда ночь. Только мини-карта, без изменения освещения мира.");
+        _mapTransparency = Config.Bind(SettingsLayout.Map, "Прозрачность карты", MapOpacity.DefaultTransparency,
+            new ConfigDescription("Прозрачность фона мини-карты: 0% — непрозрачный (по умолчанию), 100% — невидимый. Значки, рамка, подписи и большая карта не меняются.",
+                new AcceptableValueRange<int>(MapOpacity.MinTransparency, MapOpacity.MaxTransparency)));
         _showTransport = Config.Bind("2. Карта", "Показывать транспорт", true,
             "Тележки, плоты и корабли на мини-карте и большой карте. Только транспорт, загруженный клиентом рядом с игроком, включая модифицированный на компонентах Ship/Vagon. Не сохраняет метки и не ищет транспорт по всему миру.");
         _transportIconSize = Config.Bind("2. Карта", "Размер иконок транспорта", TransportLayout.DefaultIconSize,
@@ -195,13 +202,17 @@ public sealed class Plugin : BaseUnityPlugin
         Config.Remove(windPosition.Definition);
         var oldCoordinates = Config.Bind("6. HUD", "Показывать координаты", false);
         bool hadCoordinatesSwitch = _storedKeys.Contains(oldCoordinates.Definition);
-        HudSlotContent[] defaultSlots = { HudSlotContent.Empty, HudSlotContent.Biome, HudSlotContent.Wind, HudSlotContent.Empty };
-        for (int i = 0; i < 4; i++)
+        var defaultSlots = HudSlots.Defaults();
+        for (int i = 0; i < _slots.Length; i++)
         {
             _slots[i] = Config.Bind("6. HUD", "Slot " + (i + 1), defaultSlots[i],
-                "Содержимое слота. Порядок сверху вниз: Slot 1, Slot 2, мини-карта, Slot 3, Slot 4. Пустые слоты не занимают место. Элементы можно повторять.");
+                "Содержимое слота: Empty / Biome / Wind / Coordinates / Time / Weight / RealTime. Time — игровые часы HH:mm; Weight — текущий / максимальный вес; RealTime — местное время компьютера HH:mm. Порядок сверху вниз: Slot 1, Slot 2, мини-карта, Slot 3, Slot 4, Slot 5, Slot 6. Пустые слоты не занимают место. Элементы можно повторять.");
             if (!_storedKeys.Contains(_slots[i].Definition)) _slots[i].Value = migratedSlots[i];
             _slots[i].Value = HudSlots.MigrateCoordinates(_slots[i].Value, hadCoordinatesSwitch, oldCoordinates.Value);
+            // Independent keys: changing slot content never overwrites its saved size.
+            _slotTextSizes[i] = Config.Bind(SettingsLayout.Hud, HudSlots.TextSizeKey(i), HudSlots.DefaultTextPercent,
+                new ConfigDescription("",
+                    new AcceptableValueRange<int>(HudSlots.MinTextPercent, HudSlots.MaxTextPercent)));
         }
         Config.Remove(oldCoordinates.Definition);
         _targetEnabled = Config.Bind("7. Навигация", "Указатель цели", true,
@@ -359,6 +370,9 @@ public sealed class Plugin : BaseUnityPlugin
                 _hudSpacing = new HudSpacing(map, _scaleView);
                 _zoomIndicator = new ZoomIndicator(map);
                 _lightingView = new MapLightingView(map);
+                _transparencyView = new MapTransparencyView(map, error => Logger.LogWarning(
+                    "Better Minimap: прозрачность недоступна, возвращён непрозрачный фон; остальные функции продолжают работу. " +
+                    "Для повторной попытки сохраните прозрачность 0%, затем нужное значение. Настройка не изменена. " + error));
                 _targetIndicator = new TargetIndicator(map);
                 _pingIndicators = new PingIndicators(map);
                 _borderView = new MapBorderView(map);
@@ -368,6 +382,7 @@ public sealed class Plugin : BaseUnityPlugin
                 _playerIconLayer = new PlayerIconLayer(map);
             }
             _hudSpacing?.BeforeMap();
+            _transparencyView?.BeforeMap();
             _playerIconLayer?.BeforeMap();
             _pingIndicators?.BeforeMap();
             _transport?.BeforeMap();
@@ -422,8 +437,14 @@ public sealed class Plugin : BaseUnityPlugin
             _lightingView?.Apply(_lighting.Value, EnvMan.instance ? EnvMan.instance.GetDayFraction() : .5f);
             _shapeView?.Apply(_shape.Value == MapShape.Circle);
             _visibility?.Apply(_showMinimap.Value);
-            for (int i = 0; i < 4; i++) _slotContents[i] = _slots[i].Value;
-            _hudSpacing?.Apply(_sizePercent.Value, _slotContents, active ? _heading : 0, _showMinimap.Value);
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                _slotContents[i] = _slots[i].Value;
+                _slotTextPercents[i] = _slotTextSizes[i].Value;
+            }
+            _hudSpacing?.Apply(_sizePercent.Value, _slotContents, _slotTextPercents, active ? _heading : 0, _showMinimap.Value);
+            _transparencyView?.Apply(_mapTransparency.Value, active ? _heading : 0,
+                _showMinimap.Value && map.m_mode == Minimap.MapMode.Small && Player.m_localPlayer);
             _borderView?.Update(_shape.Value == MapShape.Circle);
             _zoomIndicator?.Update(_baseZoom, (float)_smoothZoom.Target, _shipZoom.ShipMode, _zoomContextChanged,
                 _hudSpacing?.ZoomIndicatorOffset ?? 0);
@@ -656,6 +677,8 @@ public sealed class Plugin : BaseUnityPlugin
         _hudSpacing = null;
         _compass?.Destroy();
         _compass = null;
+        _transparencyView?.Dispose();
+        _transparencyView = null;
         _shapeView?.Dispose();
         _shapeView = null;
         _lightingView?.Dispose();

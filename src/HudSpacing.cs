@@ -14,9 +14,11 @@ internal sealed class HudSpacing : IDisposable
     private readonly MapScaleView _scale;
     private readonly Transform _root;
     private readonly TMP_Text? _biome;
-    private readonly SlotView?[] _slots = new SlotView?[4];
-    private readonly float[] _heights = new float[4];
-    private readonly bool[] _visible = new bool[4];
+    private readonly SlotView?[] _slots = new SlotView?[HudSlots.Count];
+    private readonly double[] _heights = new double[HudSlots.Count];
+    private readonly bool[] _visible = new bool[HudSlots.Count];
+    private readonly RealClock _realClock = new RealClock();
+    private readonly WeightReadout _weightReadout = new WeightReadout();
     private RectTransform? _buffs;
     private Vector2 _buffBase, _buffLast;
     private bool _buffShifted, _hidden;
@@ -46,13 +48,28 @@ internal sealed class HudSpacing : IDisposable
         _hidden = false;
     }
 
-    public void Apply(int percent, HudSlotContent[] contents, float heading, bool showMinimap)
+    public void Apply(int percent, HudSlotContent[] contents, int[] textPercents, float heading, bool showMinimap)
     {
         bool small = showMinimap && _map && _map.m_mode == Minimap.MapMode.Small && Player.m_localPlayer &&
             _map.m_mapImageSmall && _map.m_mapImageSmall.gameObject.activeInHierarchy;
         BeforeMap();
         ZoomIndicatorOffset = 0;
-        for (int i = 0; i < 4; i++)
+        var environment = EnvMan.instance;
+        double dayFraction = small && environment ? environment.GetDayFraction() : double.NaN;
+        string realTimeText = "", weightText = "";
+        if (small)
+        {
+            bool needsRealTime = false, needsWeight = false;
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                needsRealTime |= contents[i] == HudSlotContent.RealTime;
+                needsWeight |= contents[i] == HudSlotContent.Weight;
+            }
+            if (needsRealTime) realTimeText = _realClock.Update(DateTime.Now);
+            if (needsWeight) weightText = _weightReadout.Update(Player.m_localPlayer!.GetInventory().GetTotalWeight(),
+                Player.m_localPlayer.GetMaxCarryWeight());
+        }
+        for (int i = 0; i < _slots.Length; i++)
         {
             bool show = small && contents[i] != HudSlotContent.Empty;
             _visible[i] = show;
@@ -61,7 +78,8 @@ internal sealed class HudSpacing : IDisposable
             {
                 if (_slots[i] == null) _slots[i] = new SlotView(_root, _biome, _map!.m_windMarker, i);
                 _heights[i] = _slots[i]!.Show(contents[i], _biome, _map!.m_windMarker,
-                    Player.m_localPlayer!.transform.position, heading);
+                    Player.m_localPlayer!.transform.position, heading, dayFraction,
+                    contents[i] == HudSlotContent.Weight ? weightText : realTimeText, textPercents[i]);
             }
             _slots[i]?.SetVisible(show);
         }
@@ -70,21 +88,21 @@ internal sealed class HudSpacing : IDisposable
             var image = _map!.m_mapImageSmall!.rectTransform;
             Rect area = image.rect;
             float topExtent = 0, bottomExtent = 0;
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_visible[i]) continue;
-                float extent = Mathf.Abs((float)HudSlots.CenterOffset(i, _heights[i], _heights[i < 2 ? 1 : 2])) + _heights[i] / 2;
-                if (i < 2) topExtent = Mathf.Max(topExtent, extent);
+                float extent = (float)(Math.Abs(HudSlots.CenterOffset(i, _heights)) + _heights[i] / 2);
+                if (i < HudSlots.AboveCount) topExtent = Mathf.Max(topExtent, extent);
                 else bottomExtent = Mathf.Max(bottomExtent, extent);
             }
             _scale.FitVertical(image, topExtent, bottomExtent + 32);
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_visible[i]) continue;
-                float offset = (float)HudSlots.CenterOffset(i, _heights[i], _heights[i < 2 ? 1 : 2]);
+                float offset = (float)HudSlots.CenterOffset(i, _heights);
                 _slots[i]!.Place(image.TransformPoint(new Vector3(area.center.x,
-                    (i < 2 ? area.yMax : area.yMin) + offset, 0)), area.width, _heights[i]);
-                if (i >= 2) ZoomIndicatorOffset = Mathf.Max(ZoomIndicatorOffset, -offset + _heights[i] / 2);
+                    (i < HudSlots.AboveCount ? area.yMax : area.yMin) + offset, 0)), area.width, (float)_heights[i]);
+                if (i >= HudSlots.AboveCount) ZoomIndicatorOffset = Mathf.Max(ZoomIndicatorOffset, -offset + (float)_heights[i] / 2);
             }
             for (int i = 0; i < _originalGraphics.Length; i++)
             {
@@ -137,7 +155,9 @@ internal sealed class HudSpacing : IDisposable
         private readonly TextMeshProUGUI _text;
         private Vector3 _coordinates;
         private string? _coordinateText;
+        private readonly GameClock _clock = new GameClock();
         private readonly RectTransform _wind;
+        private readonly Vector3 _windBaseScale;
         private readonly ExternalTextShadow _textShadow;
         private readonly HudContrast _contrast = new HudContrast();
 
@@ -164,6 +184,7 @@ internal sealed class HudSpacing : IDisposable
             _wind.anchorMin = _wind.anchorMax = _wind.pivot = new Vector2(.5f, .5f);
             _wind.sizeDelta = wind.rect.size;
             _wind.anchoredPosition3D = Vector3.zero;
+            _windBaseScale = _wind.localScale;
             foreach (var graphic in _wind.GetComponentsInChildren<Graphic>(true))
             {
                 graphic.raycastTarget = false;
@@ -174,19 +195,22 @@ internal sealed class HudSpacing : IDisposable
             _contrast.Apply(_wind, true);
         }
 
-        public float Show(HudSlotContent content, TMP_Text? biome, RectTransform wind, Vector3 position, float heading)
+        public float Show(HudSlotContent content, TMP_Text? biome, RectTransform wind, Vector3 position, float heading,
+            double dayFraction, string readout, int textPercent)
         {
             bool arrow = content == HudSlotContent.Wind;
             _wind.gameObject.SetActive(arrow);
             _text.gameObject.SetActive(!arrow);
             if (arrow)
             {
+                // Always scale from the captured native size, never from last frame's value.
+                _wind.localScale = _windBaseScale * HudSlots.Scale(textPercent);
                 _wind.rotation = Quaternion.Euler(0, 0, heading) * wind.rotation;
                 // Reserve its diagonal, so no wind direction can overlap a neighboring row.
                 return _wind.rect.size.magnitude * Mathf.Max(Mathf.Abs(_wind.localScale.x), Mathf.Abs(_wind.localScale.y));
             }
             _text.enableAutoSizing = false;
-            _text.fontSize = content == HudSlotContent.Biome && biome ? biome!.fontSize : HudSlots.CoordinatesFontSize;
+            _text.fontSize = HudSlots.FontSize(content, textPercent, biome ? biome!.fontSize : HudSlots.FallbackFontSize);
             _textShadow.PixelWidth = content == HudSlotContent.Coordinates ? 3 : 2;
             _text.fontStyle = content == HudSlotContent.Biome && biome ? biome!.fontStyle : FontStyles.Normal;
             _text.color = content == HudSlotContent.Biome && biome ? biome!.color : Color.white;
@@ -195,7 +219,19 @@ internal sealed class HudSpacing : IDisposable
                 // The native label is animated. Its transient alpha must not hide our persistent slot.
                 var color = _text.color; color.a = 1; _text.color = color;
                 _text.text = biome ? biome!.text : "";
-                return (float)HudSlots.BiomeHeight(_text.GetPreferredValues(_text.text).y);
+                return TextHeight();
+            }
+            if (content == HudSlotContent.Time)
+            {
+                // Assign even when the minute is unchanged: this slot may have just shown a biome/coordinates.
+                // A cached string also keeps all TMP outline copies in sync.
+                _text.text = _clock.Update(dayFraction);
+                return TextHeight();
+            }
+            if (content == HudSlotContent.Weight || content == HudSlotContent.RealTime)
+            {
+                _text.text = readout;
+                return TextHeight();
             }
             var rounded = new Vector3(Mathf.Round(position.x), Mathf.Round(position.y), Mathf.Round(position.z));
             if (_coordinateText == null || rounded != _coordinates)
@@ -207,8 +243,10 @@ internal sealed class HudSpacing : IDisposable
             // TMP's numeric SetText leaves m_text stale after its backing string has been read once.
             // Use a stable string so ALL outline copies receive the same text, including while idle.
             _text.text = _coordinateText;
-            return Mathf.Max(10, _text.fontSize * 1.2f);
+            return TextHeight();
         }
+
+        private float TextHeight() => (float)HudSlots.TextHeight(_text.fontSize, _text.GetPreferredValues(_text.text).y);
 
         public void Place(Vector3 position, float width, float height)
         {

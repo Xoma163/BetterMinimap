@@ -24,10 +24,16 @@ internal static class SettingsLayout
             for (int i = 0; i < keys.Length; i++) rows.Add(keys[i], (section, i));
         }
         Add(General, "Мод включён", "Показывать мини-карту");
-        Add(Map, "Форма", "Размер мини-карты", "Освещение карты", "Вращение", "Режим");
+        Add(Map, "Форма", "Размер мини-карты", "Освещение карты", "Прозрачность карты", "Вращение", "Режим");
         Add(Zoom, "Min zoom", "Max zoom", "Шаг зума", "Плавный зум", "Сохранять отдельный зум для кораблей",
             "Зум через + и -", "Приблизить", "Отдалить");
-        Add(Hud, "Slot 1", "Slot 2", "Slot 3", "Slot 4");
+        var hudKeys = new string[HudSlots.Count * 2];
+        for (int i = 0; i < HudSlots.Count; i++)
+        {
+            hudKeys[i * 2] = "Slot " + (i + 1);
+            hudKeys[i * 2 + 1] = HudSlots.TextSizeKey(i);
+        }
+        Add(Hud, hudKeys);
         Add(Navigation, "Показывать направления", "Показывать линии компаса", "Тип линии", "Толщина линии", "Цвет линии", "Указатель цели");
         Add(Players, "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов");
         Add(Transport, "Показывать транспорт", "Размер иконок транспорта");

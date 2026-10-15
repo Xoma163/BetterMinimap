@@ -183,9 +183,9 @@ smooth.Reset(.01);
 Near(smooth.Target, .01);
 Near(smooth.Advance(1, true), .01);
 foreach (string key in new[] { "Мод включён", "Показывать мини-карту", "Вращение", "Режим", "Форма", "Размер мини-карты",
-    "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Указатель цели", "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов", "Показывать транспорт", "Размер иконок транспорта", "Min zoom", "Max zoom", "Шаг зума", "Сохранять отдельный зум для кораблей",
+    "Slot 1", "Slot 2", "Slot 3", "Slot 4", "Slot 5", "Slot 6", "Указатель цели", "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов", "Показывать транспорт", "Размер иконок транспорта", "Min zoom", "Max zoom", "Шаг зума", "Сохранять отдельный зум для кораблей",
     "Плавный зум", "Зум через + и -", "Приблизить", "Отдалить", "Показывать линии компаса",
-    "Показывать направления", "Тип линии", "Цвет линии", "Толщина линии", "Освещение карты" })
+    "Показывать направления", "Тип линии", "Цвет линии", "Толщина линии", "Освещение карты", "Прозрачность карты" })
 {
     Check(SettingsText.HasEntry(key));
     Check(SettingsText.Name(key, true) == (key == "Зум через + и -" ? "Зум через доп. клавиши" : key));
@@ -201,15 +201,16 @@ Check(SettingsText.Section(SettingsLayout.Navigation, false) == "5. Compass and 
 Check(SettingsText.Section(SettingsLayout.Transport, false) == "7. Transport");
 var settingGroups = new[] {
     (SettingsLayout.General, new[] { "Мод включён", "Показывать мини-карту" }),
-    (SettingsLayout.Map, new[] { "Форма", "Размер мини-карты", "Освещение карты", "Вращение", "Режим" }),
+    (SettingsLayout.Map, new[] { "Форма", "Размер мини-карты", "Освещение карты", "Прозрачность карты", "Вращение", "Режим" }),
     (SettingsLayout.Zoom, new[] { "Min zoom", "Max zoom", "Шаг зума", "Плавный зум", "Сохранять отдельный зум для кораблей", "Зум через + и -", "Приблизить", "Отдалить" }),
-    (SettingsLayout.Hud, new[] { "Slot 1", "Slot 2", "Slot 3", "Slot 4" }),
+    (SettingsLayout.Hud, new[] { "Slot 1", "Размер текста Slot 1", "Slot 2", "Размер текста Slot 2",
+        "Slot 3", "Размер текста Slot 3", "Slot 4", "Размер текста Slot 4", "Slot 5", "Размер текста Slot 5", "Slot 6", "Размер текста Slot 6" }),
     (SettingsLayout.Navigation, new[] { "Показывать направления", "Показывать линии компаса", "Тип линии", "Толщина линии", "Цвет линии", "Указатель цели" }),
     (SettingsLayout.Players, new[] { "Показывать никнеймы", "Размер шрифта никнеймов", "Обводка никнеймов" }),
     (SettingsLayout.Transport, new[] { "Показывать транспорт", "Размер иконок транспорта" })
 };
 Check(settingGroups.Length == 7);
-Check(settingGroups.SelectMany(group => group.Item2).Distinct().Count() == 30);
+Check(settingGroups.SelectMany(group => group.Item2).Distinct().Count() == 39);
 foreach (var (section, keys) in settingGroups)
 {
     Check(SettingsText.Section(section, true) == section);
@@ -221,7 +222,7 @@ foreach (var (section, keys) in settingGroups)
         Check(SettingsText.HasEntry(keys[i]));
     }
 }
-Check(SettingsText.SectionHint(SettingsLayout.Hud, true).Contains("Slot 1 → Slot 2 → мини-карта → Slot 3 → Slot 4"));
+Check(SettingsText.SectionHint(SettingsLayout.Hud, true).Contains("Slot 1 → Slot 2 → мини-карта → Slot 3 → Slot 4 → Slot 5 → Slot 6"));
 Check(SettingsText.SectionHint(SettingsLayout.Navigation, false).Contains("no separate toggle"));
 Check(SettingsText.SectionHint(SettingsLayout.General, true) == "");
 // Upgrade, restart, partial migration and conflicting old/new values: explicit new values win.
@@ -254,6 +255,14 @@ for (int i = 0; i <= 1000; i++)
 }
 Check(SettingsText.Choice("HudSlotContent", "Biome", true) == "Биом");
 Check(SettingsText.Choice("HudSlotContent", "Coordinates", false) == "Coordinates");
+Check(SettingsText.Choice("HudSlotContent", "Time", true) == "Игровое время");
+Check(SettingsText.Choice("HudSlotContent", "Time", false) == "In-game time");
+Check(SettingsText.Choice("HudSlotContent", "Weight", true) == "Вес");
+Check(SettingsText.Choice("HudSlotContent", "Weight", false) == "Weight");
+Check(SettingsText.Choice("HudSlotContent", "RealTime", true) == "Реальное время");
+Check(SettingsText.Choice("HudSlotContent", "RealTime", false) == "Real time");
+Check(SettingsText.SectionHint(SettingsLayout.Hud, true).Contains("HH:mm"));
+Check(SettingsText.SectionHint(SettingsLayout.Hud, false).Contains("Coordinates / In-game time / Weight / Real time"));
 Check(SettingsText.PanelText("Save", true) == "Сохранить");
 Check(SettingsText.PanelText("Save", false) == "Save");
 Check(SettingsText.Name("unknown", false) == "unknown");
@@ -294,6 +303,86 @@ Check(ResetPreset.Value("Форма", TestShape.Circle, true).Equals(TestShape.S
 Check(ResetPreset.Value("Форма", TestShape.Circle, false).Equals(TestShape.Circle));
 Check(ResetPreset.Value("Slot 2", HudSlotContent.Biome, true).Equals(HudSlotContent.Biome));
 Check(ResetPreset.Value("Slot 3", HudSlotContent.Wind, false).Equals(HudSlotContent.Wind));
+Near(MapOpacity.DefaultTransparency, 0);
+Near(MapOpacity.Alpha(0), 1);
+Near(MapOpacity.Alpha(25), .75);
+Near(MapOpacity.Alpha(50), .5);
+Near(MapOpacity.Alpha(75), .25);
+Near(MapOpacity.Alpha(100), 0);
+Near(MapOpacity.Alpha(int.MinValue), 1);
+Near(MapOpacity.Alpha(int.MaxValue), 0);
+// Fault injection uses the same guard as the Unity view. A rendering failure must
+// restore once, warn once and allow the caller (the rest of the mod) to continue.
+int renderAttempts = 0, restores = 0, warnings = 0, continued = 0;
+bool failRender = true, nativeVisible = true, overlayAllocated = false;
+float capturedHeading = 0;
+bool capturedVisible = false;
+Exception warningError = null;
+var fallback = new TransparencyFallback((percent, heading, visible) =>
+{
+    renderAttempts++;
+    if (percent == 0) { nativeVisible = true; overlayAllocated = false; return; }
+    capturedHeading = heading; capturedVisible = visible;
+    overlayAllocated = true;
+    nativeVisible = false;
+    if (failRender) throw new InvalidOperationException("Injected RenderTexture/SetPass failure");
+}, () => { restores++; nativeVisible = true; overlayAllocated = false; }, error =>
+{
+    warnings++;
+    warningError = error;
+});
+for (int frame = 0; frame < 100; frame++) { fallback.Apply(50, 90, true); continued++; }
+Check(renderAttempts == 1 && restores == 1 && warnings == 1 && continued == 100);
+Near(capturedHeading, 90);
+Check(capturedVisible && warningError is InvalidOperationException);
+Check(nativeVisible && !overlayAllocated);
+fallback.Apply(75, 90, true);
+fallback.Apply(100, 90, true);
+fallback.Apply(50, 90, false);
+Check(renderAttempts == 1); // neither nonzero edits nor hidden/reopened maps retry
+fallback.Apply(0, 0, false); // explicit reset, even while the minimap is hidden
+Check(renderAttempts == 2 && nativeVisible);
+fallback.Apply(50, 90, true);
+Check(renderAttempts == 3 && warnings == 2 && restores == 2);
+failRender = false;
+fallback.Apply(0, 0, true);
+fallback.Apply(50, 90, true);
+Check(renderAttempts == 5 && restores == 2 && warnings == 2 && !nativeVisible && overlayAllocated);
+// Cleanup/logging failures are contained too, including a failing zero-percent cleanup.
+int brokenAttempts = 0, brokenWarnings = 0;
+Exception brokenError = null;
+var brokenFallback = new TransparencyFallback((percent, heading, visible) =>
+{
+    brokenAttempts++;
+    throw new InvalidOperationException("Render failure");
+}, () => throw new Exception("Cleanup failure"), error =>
+{
+    brokenWarnings++;
+    brokenError = error;
+    throw new Exception("Logger failure");
+});
+for (int frame = 0; frame < 100; frame++) brokenFallback.Apply(0, 0, true);
+Check(brokenAttempts == 1 && brokenWarnings == 1);
+Check(brokenError is AggregateException aggregate && aggregate.InnerExceptions.Count == 2);
+for (int percent = 0; percent <= 100; percent++)
+{
+    Check(Math.Abs(MapOpacity.Alpha(percent) - (1 - percent / 100d)) < 1e-6);
+    if (percent > 0) Check(MapOpacity.Alpha(percent) < MapOpacity.Alpha(percent - 1));
+}
+foreach (bool vanilla in new[] { false, true })
+    Check(ResetPreset.Value("Прозрачность карты", MapOpacity.DefaultTransparency, vanilla).Equals(0));
+Check(SettingsLayout.SectionFor("Прозрачность карты") == SettingsLayout.Map);
+Near(SettingsLayout.MigratedValue(true, 63, MapOpacity.DefaultTransparency), 63);
+// Both presets keep the original slot defaults; the clock is opt-in, not a new setting.
+foreach (bool vanilla in new[] { false, true })
+{
+    var defaults = HudSlots.Defaults();
+    for (int i = 0; i < defaults.Length; i++)
+    {
+        Check(ResetPreset.Includes("Slot " + (i + 1)));
+        Check(ResetPreset.Value("Slot " + (i + 1), defaults[i], vanilla).Equals(defaults[i]));
+    }
+}
 Check(SettingsText.ResetLabel(true, false) == "Reset to Vanilla");
 Check(SettingsText.ResetLabel(false, false) == "Reset to mod default");
 Check(SettingsText.ResetLabel(true, true) == "Сбросить к настройкам игры");
@@ -359,7 +448,8 @@ finally
 }
 // Slot defaults/migration: never lose a biome or wind element, including old corner values.
 Check(HudSlots.Migrate("Above", "Bottom").SequenceEqual(new[] {
-    HudSlotContent.Empty, HudSlotContent.Biome, HudSlotContent.Wind, HudSlotContent.Empty }));
+    HudSlotContent.Empty, HudSlotContent.Biome, HudSlotContent.Wind, HudSlotContent.Empty, HudSlotContent.Empty, HudSlotContent.Empty }));
+Check(HudSlots.Defaults().SequenceEqual(HudSlots.Migrate("Above", "Bottom")));
 Check(!SettingsText.HasEntry("Показывать координаты"));
 foreach (HudSlotContent content in Enum.GetValues<HudSlotContent>())
 foreach (bool hadSwitch in new[] { false, true })
@@ -374,7 +464,8 @@ foreach (string biome in new[] { "Vanilla", "Above", "Below" })
 foreach (string wind in new[] { "Vanilla", "TopLeft", "TopRight", "BottomLeft", "BottomRight", "Top", "Bottom" })
 {
     var slots = HudSlots.Migrate(biome, wind);
-    Check(slots.Length == 4);
+    Check(slots.Length == HudSlots.Count && slots.Length == 6);
+    Check(slots[4] == HudSlotContent.Empty && slots[5] == HudSlotContent.Empty);
     Check(slots.Count(x => x == HudSlotContent.Biome) == 1);
     Check(slots.Count(x => x == HudSlotContent.Wind) == 1);
     Check(slots.Count(x => x == HudSlotContent.Coordinates) == 0);
@@ -386,19 +477,135 @@ foreach (string wind in new[] { "Vanilla", "TopLeft", "TopRight", "BottomLeft", 
 foreach (double inner in new[] { 10d, 19.2d, 22d, 36d, 56d, 100d })
 foreach (double outer in new[] { 10d, 19.2d, 22d, 36d, 56d, 100d })
 {
-    double upperInner = HudSlots.CenterOffset(1, inner, 0);
-    double upperOuter = HudSlots.CenterOffset(0, outer, inner);
+    var heights = new[] { outer, inner, inner, outer, 0d, 0d };
+    double upperInner = HudSlots.CenterOffset(1, heights);
+    double upperOuter = HudSlots.CenterOffset(0, heights);
     Near(upperInner - inner / 2, HudSlots.Gap);
     Near(upperOuter - outer / 2 - (upperInner + inner / 2), HudSlots.Gap);
-    Near(HudSlots.CenterOffset(2, inner, 0), -upperInner);
-    Near(HudSlots.CenterOffset(3, outer, inner), -upperOuter);
+    Near(HudSlots.CenterOffset(2, heights), -upperInner);
+    Near(HudSlots.CenterOffset(3, heights), -upperOuter);
 }
 Check(SettingsText.Section(SettingsLayout.Navigation, false) == "5. Compass and navigation");
 Near(HudSlots.Gap, 2);
-Near(HudSlots.CoordinatesFontSize, 9);
-Near(HudSlots.BiomeHeight(16), 26);
-Near(HudSlots.BiomeHeight(31.2), 36);
-Near(HudSlots.BiomeHeight(48), 52);
+Near(HudSlots.FallbackFontSize, 16);
+Near(HudSlots.DefaultTextPercent, 100);
+Near(HudSlots.MinTextPercent, 25);
+Near(HudSlots.MaxTextPercent, 400);
+for (int slot = 0; slot < HudSlots.Count; slot++)
+{
+    string key = HudSlots.TextSizeKey(slot);
+    Check(key == "Размер текста Slot " + (slot + 1));
+    Check(SettingsText.HasEntry(key));
+    Check(SettingsText.Name(key, true) == "Размер текста слот " + (slot + 1));
+    Check(SettingsText.Name(key, false) == "Slot " + (slot + 1) + " text size");
+    Check(SettingsText.Description(key, true, "MISSING") == "");
+    Check(SettingsText.Description(key, false, "MISSING") == "");
+    Check(HudSlots.TryGetTextSizeSlot(key, out int foundSlot) && foundSlot == slot);
+    Check(SettingsLayout.SectionFor(key) == SettingsLayout.Hud);
+    Near(SettingsLayout.Order(key), SettingsLayout.Order("Slot " + (slot + 1)) + 1);
+    Check(ResetPreset.Includes(key));
+    foreach (bool vanilla in new[] { false, true })
+        Check(ResetPreset.Value(key, HudSlots.DefaultTextPercent, vanilla).Equals(100));
+    // A saved size is independent of content and wins on reload; new keys start at 100.
+    Near(SettingsLayout.MigratedValue(true, 75 + slot * 20, HudSlots.DefaultTextPercent), 75 + slot * 20);
+}
+Check(!HudSlots.TryGetTextSizeSlot("Размер текста Slot 7", out _));
+Check(!HudSlots.TryGetTextSizeSlot("Slot 1", out _));
+Check(!HudSlots.TryGetTextSizeSlot("Размер шрифта никнеймов", out _));
+foreach (int percent in new[] { 25, 50, 75, 100, 150, 200, 400 })
+{
+    foreach (var content in new[] { HudSlotContent.Coordinates, HudSlotContent.Time, HudSlotContent.RealTime, HudSlotContent.Weight, HudSlotContent.Biome })
+        Near(HudSlots.FontSize(content, percent, 30), 30d * percent / 100);
+    Near(HudSlots.Scale(percent), percent / 100d); // wind uses the same factor from its native base scale
+    Near(HudSlots.FontSize(HudSlotContent.Wind, percent, 30), 0);
+    Near(HudSlots.FontSize(HudSlotContent.Empty, percent, 30), 0);
+}
+Near(HudSlots.FontSize(HudSlotContent.Coordinates, int.MinValue, 30), 7.5);
+Near(HudSlots.FontSize(HudSlotContent.Time, int.MaxValue, 30), 120);
+Near(HudSlots.Scale(int.MinValue), .25);
+Near(HudSlots.Scale(int.MaxValue), 4);
+Check(!SlotRowLayout.SingleLine(0) && !SlotRowLayout.SingleLine(719));
+Check(SlotRowLayout.SingleLine(720) && SlotRowLayout.SingleLine(1100));
+Near(SlotRowLayout.Height(719), 88);
+Near(SlotRowLayout.Height(720), 46);
+Near(HudSlots.TextHeight(4.5, 6), 10);
+Near(HudSlots.TextHeight(9, 9), 10.8);
+Near(HudSlots.TextHeight(12, 12), 14.4);
+Near(HudSlots.TextHeight(24, 24), 28.8);
+Near(HudSlots.TextHeight(24, 31.2), 32); // actual font metrics can exceed nominal size
+// Different sizes in repeated-content slots remain independent and their rows do not overlap.
+foreach (var content in new[] { HudSlotContent.Coordinates, HudSlotContent.Weight, HudSlotContent.Time, HudSlotContent.RealTime, HudSlotContent.Biome })
+{
+    int[] percents = { 25, 75, 100, 150, 200, 400 };
+    var heights = new double[HudSlots.Count];
+    for (int slot = 0; slot < HudSlots.Count; slot++)
+    {
+        float font = HudSlots.FontSize(content, percents[slot], 30);
+        heights[slot] = HudSlots.TextHeight(font, font * 1.3);
+    }
+    double lowerEdge = 0;
+    for (int slot = HudSlots.AboveCount; slot < HudSlots.Count; slot++)
+    {
+        double center = Math.Abs(HudSlots.CenterOffset(slot, heights));
+        Near(center - heights[slot] / 2 - lowerEdge, HudSlots.Gap);
+        lowerEdge = center + heights[slot] / 2;
+    }
+}
+// Append enum values so legacy numeric slot selections remain valid.
+Check((int)HudSlotContent.Empty == 0 && (int)HudSlotContent.Biome == 1 &&
+    (int)HudSlotContent.Wind == 2 && (int)HudSlotContent.Coordinates == 3 && (int)HudSlotContent.Time == 4);
+Check((int)HudSlotContent.Weight == 5 && (int)HudSlotContent.RealTime == 6);
+var realClock = new RealClock();
+var localNow = new DateTime(2026, 10, 12, 14, 35, 0, DateTimeKind.Local);
+Check(realClock.Update(localNow) == "14:35");
+Check(ReferenceEquals(realClock.Update(localNow), realClock.Update(localNow.AddSeconds(59))));
+Check(realClock.Update(localNow.AddMinutes(1)) == "14:36");
+Check(realClock.Update(localNow.AddHours(-1)) == "13:35"); // system time/zone correction
+Check(realClock.Update(new DateTime(2026, 10, 12, 23, 59, 59)) == "23:59");
+Check(realClock.Update(new DateTime(2026, 10, 13, 0, 0, 0)) == "00:00");
+var weight = new WeightReadout();
+Check(weight.Update(0, 300) == "0 / 300");
+Check(weight.Update(123.1, 300) == "124 / 300");
+Check(ReferenceEquals(weight.Update(123.1, 300), weight.Update(123.9, 300)));
+Check(weight.Update(300.01, 300) == "301 / 300"); // don't hide overload
+Check(weight.Update(301, 450) == "301 / 450"); // equipment/status effect changes
+Check(weight.Update(301, 450.2) == "301 / 451");
+Check(weight.Update(0, 0) == "0 / 0");
+Check(weight.Update(99999.5, 100000) == "100000 / 100000");
+Check(weight.Update(double.NaN, 300) == "-- / 300");
+Check(weight.Update(10, double.PositiveInfinity) == "10 / --");
+Check(weight.Update(-1, double.NegativeInfinity) == "-- / --");
+Check(weight.Update(15, 300) == "15 / 300"); // recover after invalid data/world change
+var clock = new GameClock();
+Check(clock.Update(double.NaN) == "--:--");
+Check(clock.Update(0) == "00:00");
+Check(clock.Update(.25) == "06:00");
+Check(clock.Update(.5) == "12:00");
+Check(clock.Update(.75) == "18:00");
+Check(clock.Update((14 * 60 + 35.5) / 1440) == "14:35");
+Check(clock.Update(1 - 1e-9) == "23:59");
+Check(clock.Update(1) == "00:00");
+Check(clock.Update(2.25) == "06:00");
+Check(clock.Update(-.25) == "18:00");
+Check(clock.Update(double.PositiveInfinity) == "--:--");
+Check(clock.Update(double.NegativeInfinity) == "--:--");
+// Sleep/time changes and a new world must not retain the previous minute.
+Check(clock.Update(.95) == "22:48");
+Check(clock.Update(.25) == "06:00");
+Check(clock.Update(.5) == "12:00");
+Check(ReferenceEquals(clock.Update(.5), clock.Update(.5 + .1 / 1440)));
+var clockCulture = System.Globalization.CultureInfo.CurrentCulture;
+try
+{
+    System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("fi-FI");
+    for (int minute = 0; minute < 1440; minute++)
+    {
+        Check(clock.Update((minute + .5) / 1440) == $"{minute / 60:00}:{minute % 60:00}");
+        Check(realClock.Update(localNow.Date.AddMinutes(minute)) == $"{minute / 60:00}:{minute % 60:00}");
+    }
+    Check(weight.Update(150.3, 450.1) == "151 / 451");
+}
+finally { System.Globalization.CultureInfo.CurrentCulture = clockCulture; }
 Check(SettingsText.Section(SettingsLayout.Players, false) == "6. Players");
 Check(ResetPreset.Value("Размер шрифта никнеймов", PlayerNameLayout.DefaultFontSize, false).Equals(8));
 Near(PlayerNameLayout.DefaultFontSize, 8);
@@ -414,10 +621,33 @@ foreach (double y in new[] { -80d, 0d, 60d })
     Near(y - nameTop, iconHeight * .3 + 1);
 }
 Check(ResetPreset.Value("Обводка никнеймов", true, false).Equals(true));
-Near(HudSlots.CenterOffset(0, 10, 0), HudSlots.CenterOffset(1, 10, 0));
-Near(HudSlots.CenterOffset(3, 10, 0), HudSlots.CenterOffset(2, 10, 0));
-Near(HudSlots.CenterOffset(2, 22, 0), -13);
-Near(HudSlots.CenterOffset(3, 10, 22), -31);
+Near(HudSlots.CenterOffset(0, new[] { 10d, 0, 0, 0, 0, 0 }), HudSlots.CenterOffset(1, new[] { 0d, 10, 0, 0, 0, 0 }));
+Near(HudSlots.CenterOffset(3, new[] { 0d, 0, 0, 10, 0, 0 }), HudSlots.CenterOffset(2, new[] { 0d, 0, 10, 0, 0, 0 }));
+Near(HudSlots.CenterOffset(2, new[] { 0d, 0, 22, 10, 0, 0 }), -13);
+Near(HudSlots.CenterOffset(3, new[] { 0d, 0, 22, 10, 0, 0 }), -31);
+// Every empty/filled combination: lower rows accumulate ALL preceding filled rows.
+for (int mask = 0; mask < (1 << HudSlots.Count); mask++)
+{
+    var heights = new double[HudSlots.Count];
+    for (int i = 0; i < heights.Length; i++) heights[i] = (mask & (1 << i)) != 0 ? 10 + i * 7.2 : 0;
+    foreach (var order in new[] { new[] { 1, 0 }, new[] { 2, 3, 4, 5 } })
+    {
+        double edge = 0;
+        foreach (int slot in order)
+        {
+            double center = HudSlots.CenterOffset(slot, heights);
+            if (heights[slot] == 0) { Near(center, 0); continue; }
+            Check(slot < HudSlots.AboveCount ? center > 0 : center < 0);
+            Near(Math.Abs(center) - heights[slot] / 2 - edge, HudSlots.Gap);
+            edge = Math.Abs(center) + heights[slot] / 2;
+        }
+    }
+}
+foreach (HudSlotContent saved in Enum.GetValues<HudSlotContent>())
+{
+    Check(SettingsLayout.MigratedValue(true, saved, HudSlotContent.Empty) == saved);
+    Check(SettingsLayout.MigratedValue(false, saved, HudSlotContent.Empty) == HudSlotContent.Empty);
+}
 Check(ResetPreset.Value("Показывать мини-карту", true, true).Equals(true));
 Check(ResetPreset.Value("Показывать мини-карту", true, false).Equals(true));
 Check(SettingsText.TargetSelected(350.4, true) == "Цель выбрана (350 м)");

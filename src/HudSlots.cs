@@ -1,28 +1,67 @@
 using System;
+using System.Collections.Generic;
 
 namespace Shtab.RotatingMinimap;
 
-public enum HudSlotContent { Empty, Biome, Wind, Coordinates }
+public enum HudSlotContent { Empty, Biome, Wind, Coordinates, Time, Weight, RealTime }
 
-// Slot indices run from the top of the screen to the bottom: 1, 2, map, 3, 4.
+// Slot indices run from the top of the screen to the bottom: 1, 2, map, 3, 4, 5, 6.
 internal static class HudSlots
 {
+    public const int Count = 6;
+    public const int AboveCount = 2;
     public const double Gap = 2;
-    public const float CoordinatesFontSize = 9;
-    public static double BiomeHeight(double preferredHeight) => Math.Max(26, Math.Ceiling(preferredHeight + 4));
+    public const float FallbackFontSize = 16;
+    public const int DefaultTextPercent = 100;
+    public const int MinTextPercent = 25;
+    public const int MaxTextPercent = 400;
 
-    public static double CenterOffset(int slot, double ownHeight, double innerHeight)
+    public static string TextSizeKey(int slot)
     {
-        if (slot < 0 || slot > 3) throw new ArgumentOutOfRangeException(nameof(slot));
-        double distance = Gap + ownHeight / 2;
+        if (slot < 0 || slot >= Count) throw new ArgumentOutOfRangeException(nameof(slot));
+        return "Размер текста Slot " + (slot + 1);
+    }
+
+    public static float FontSize(HudSlotContent content, int percent, float biomeFontSize)
+    {
+        if (content == HudSlotContent.Empty || content == HudSlotContent.Wind) return 0;
+        return biomeFontSize * Scale(percent);
+    }
+
+    public static float Scale(int percent) => Math.Max(MinTextPercent, Math.Min(MaxTextPercent, percent)) / 100f;
+
+    public static bool TryGetTextSizeSlot(string key, out int slot)
+    {
+        for (slot = 0; slot < Count; slot++)
+            if (key == TextSizeKey(slot)) return true;
+        slot = -1;
+        return false;
+    }
+
+    public static double TextHeight(double fontSize, double preferredHeight) =>
+        Math.Max(10, Math.Max(fontSize * 1.2, Math.Ceiling(preferredHeight)));
+
+    public static HudSlotContent[] Defaults() => new[] {
+        HudSlotContent.Empty, HudSlotContent.Biome, HudSlotContent.Wind,
+        HudSlotContent.Empty, HudSlotContent.Empty, HudSlotContent.Empty };
+
+    public static double CenterOffset(int slot, IReadOnlyList<double> heights)
+    {
+        if (slot < 0 || slot >= Count) throw new ArgumentOutOfRangeException(nameof(slot));
+        if (heights.Count != Count) throw new ArgumentException("Expected all HUD slot heights", nameof(heights));
+        if (heights[slot] <= 0) return 0;
+        double distance = Gap + heights[slot] / 2;
         // Empty slots preserve order, not a blank row's worth of screen space.
-        if ((slot == 0 || slot == 3) && innerHeight > 0) distance += innerHeight + Gap;
-        return slot < 2 ? distance : -distance;
+        int start = slot < AboveCount ? slot + 1 : AboveCount;
+        int end = slot < AboveCount ? AboveCount : slot;
+        for (int i = start; i < end; i++)
+            if (heights[i] > 0) distance += heights[i] + Gap;
+        return slot < AboveCount ? distance : -distance;
     }
 
     public static HudSlotContent[] Migrate(string biome, string wind)
     {
-        var slots = new HudSlotContent[4];
+        var slots = new HudSlotContent[Count];
         int biomeSlot = biome == "Below" ? 2 : 1;
         slots[biomeSlot] = HudSlotContent.Biome;
         bool top = wind == "Top" || wind == "TopLeft" || wind == "TopRight";

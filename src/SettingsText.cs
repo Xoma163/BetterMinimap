@@ -16,13 +16,16 @@ internal static class SettingsText
         ["Режим"] = ("Orientation", "Север сверху, по камере или по персонажу.", "Keep north up, or follow the camera or character heading."),
         ["Форма"] = ("Shape", "Квадратная или круглая мини-карта.", "Square or circular minimap."),
         ["Освещение карты"] = ("Map lighting", "По времени суток, всегда день или всегда ночь. Освещение мира и большой карты не меняется.", "Follow time of day, always day or always night. Does not affect world or large-map lighting."),
+        ["Прозрачность карты"] = ("Map transparency (%)", "Прозрачность фона мини-карты: 0% — непрозрачный (по умолчанию), 100% — невидимый. Значки, рамка, подписи и большая карта не меняются.", "Minimap background transparency: 0% is opaque (default), 100% is invisible. Icons, border, labels and the large map are unchanged."),
         ["Показывать транспорт"] = ("Show transport", "Тележки, плоты и корабли на обеих картах, по умолчанию включено. Только загруженные клиентом объекты рядом с игроком, включая модифицированные на компонентах Ship/Vagon. Без сохранения меток и поиска по всему миру.", "Carts, rafts and ships on both maps, enabled by default. Only nearby client-loaded objects, including modded vehicles using Ship/Vagon components. No saved pins or world-wide tracking."),
         ["Размер мини-карты"] = ("Minimap size", "Размер всего блока: 50–150%. При увеличении бафы сдвигаются влево.", "Scale the entire minimap: 50–150%. Enlarging it shifts status effects to the left."),
         ["Размер иконок транспорта"] = ("Transport icon size", "Размер иконок тележек, плотов и кораблей на обеих картах: 5–20, по умолчанию 12. Не влияет на иконки игроков.", "Cart, raft and ship icon size on both maps: 5–20, default 12. Does not affect player icons."),
-        ["Slot 1"] = ("Slot 1", "Верхний дальний слот. Пусто, биом, ветер или координаты; элементы можно повторять.", "Upper outer slot. Empty, biome, wind or coordinates; elements may be repeated."),
+        ["Slot 1"] = ("Slot 1", "Верхний дальний слот. Пусто, биом, ветер, координаты, игровое время, вес или реальное время; элементы можно повторять.", "Upper outer slot. Empty, biome, wind, coordinates, in-game time, weight or real time; elements may be repeated."),
         ["Slot 2"] = ("Slot 2", "Слот непосредственно над мини-картой. По умолчанию — биом.", "Slot immediately above the minimap. Default: biome."),
         ["Slot 3"] = ("Slot 3", "Слот непосредственно под мини-картой. По умолчанию — ветер.", "Slot immediately below the minimap. Default: wind."),
-        ["Slot 4"] = ("Slot 4", "Нижний дальний слот. По умолчанию — пусто. Выберите «Координаты» для показа X/Y/Z. Пустые слоты не занимают место.", "Lower outer slot. Default: empty. Select Coordinates to show X/Y/Z. Empty slots take no space."),
+        ["Slot 4"] = ("Slot 4", "Второй слот под мини-картой. По умолчанию — пусто. «Вес» — текущий / максимальный; «Реальное время» — местные часы компьютера HH:mm. Пустые слоты не занимают место.", "Second slot below the minimap. Default: empty. Weight is current / maximum; Real time is the computer's local clock (HH:mm). Empty slots take no space."),
+        ["Slot 5"] = ("Slot 5", "Третий слот под мини-картой, ниже Slot 4. По умолчанию — пусто. Доступны все варианты содержимого.", "Third slot below the minimap, after Slot 4. Default: empty. All content options are available."),
+        ["Slot 6"] = ("Slot 6", "Нижний дальний слот, ниже Slot 5. По умолчанию — пусто. Пустые слоты не занимают место.", "Bottom outer slot, after Slot 5. Default: empty. Empty slots take no space."),
         ["Указатель цели"] = ("Target indicator", "Shift + ЛКМ по любой точке большой карты — указать цель. Shift + ПКМ — снять, не удаляя метки. Направление и расстояние по горизонтали на мини-карте. Только текущий сеанс.", "Shift + left-click anywhere on the large map to set a waypoint. Shift + right-click to clear without deleting pins. Shows direction and horizontal distance on the minimap. Current session only."),
         ["Показывать никнеймы"] = ("Show player names", "Никнеймы под иконками других игроков с открытой позицией. Имя своего персонажа не показывается. Большая карта не меняется.", "Names below the icons of other players sharing their position. Your own name is not shown. The large map is unchanged."),
         ["Размер шрифта никнеймов"] = ("Player name font size", "Размер текста под иконками игроков, 4–20, по умолчанию 8. Не влияет на биом и координаты.", "Font size below player icons, 4–20, default 8. Does not affect the biome or coordinates."),
@@ -41,6 +44,12 @@ internal static class SettingsText
         ["Цвет линии"] = ("Line color", "HEX #RRGGBB или #RRGGBBAA. Прозрачность: 00 — невидимо, FF — непрозрачно.", "HEX #RRGGBB or #RRGGBBAA. Alpha: 00 is invisible, FF is opaque."),
         ["Толщина линии"] = ("Line thickness", "Толщина линий: 0,1–3,0. Размер букв не меняется.", "Line thickness: 0.1–3.0. Does not change letter size.")
     };
+
+    static SettingsText()
+    {
+        for (int i = 0; i < HudSlots.Count; i++)
+            Entries.Add(HudSlots.TextSizeKey(i), ("Slot " + (i + 1) + " text size", "", ""));
+    }
 
     public static string Pick(bool ru, string russian, string english) => ru ? russian : english;
     public static string TargetSelected(double meters, bool ru) =>
@@ -74,6 +83,7 @@ internal static class SettingsText
     {
         // Keep the historical config key so saved values, migration and presets remain compatible.
         if (ru && key == "Зум через + и -") return "Зум через доп. клавиши";
+        if (ru && HudSlots.TryGetTextSizeSlot(key, out int slot)) return "Размер текста слот " + (slot + 1);
         return !ru && Entries.TryGetValue(key, out var text) ? text.Name : key;
     }
     public static string Description(string key, bool ru, string fallback) =>
@@ -97,8 +107,8 @@ internal static class SettingsText
     public static string SectionHint(string section, bool ru)
     {
         if (section == SettingsLayout.Hud) return Pick(ru,
-            "Сверху вниз: Slot 1 → Slot 2 → мини-карта → Slot 3 → Slot 4. В каждом: Пусто / Биом / Ветер / Координаты.",
-            "Top to bottom: Slot 1 → Slot 2 → minimap → Slot 3 → Slot 4. Each slot: Empty / Biome / Wind / Coordinates.");
+            "Сверху вниз: Slot 1 → Slot 2 → мини-карта → Slot 3 → Slot 4 → Slot 5 → Slot 6. В каждом: Пусто / Биом / Ветер / Координаты / Игровое время / Вес / Реальное время. Часы — HH:mm; вес — текущий / максимальный.",
+            "Top to bottom: Slot 1 → Slot 2 → minimap → Slot 3 → Slot 4 → Slot 5 → Slot 6. Each slot: Empty / Biome / Wind / Coordinates / In-game time / Weight / Real time. Clocks: HH:mm; weight: current / maximum.");
         if (section == SettingsLayout.Navigation) return Pick(ru,
             "Пинги: не помещающиеся на мини-карте пинги показаны синими стрелками у края. Отдельного переключателя нет.",
             "Pings: those that do not fit on the minimap appear as blue edge arrows. There is no separate toggle.");
@@ -116,6 +126,9 @@ internal static class SettingsText
             case "HudSlotContent.Biome": return Pick(ru, "Биом", "Biome");
             case "HudSlotContent.Wind": return Pick(ru, "Ветер", "Wind");
             case "HudSlotContent.Coordinates": return Pick(ru, "Координаты", "Coordinates");
+            case "HudSlotContent.Time": return Pick(ru, "Игровое время", "In-game time");
+            case "HudSlotContent.Weight": return Pick(ru, "Вес", "Weight");
+            case "HudSlotContent.RealTime": return Pick(ru, "Реальное время", "Real time");
             case "MapShape.Square": return Pick(ru, "Квадратная", "Square");
             case "MapShape.Circle": return Pick(ru, "Круглая", "Circle");
             case "RotationMode.NorthUp": return Pick(ru, "Север сверху", "North up");

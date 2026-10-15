@@ -1,5 +1,38 @@
 # Changelog
 
+<details>
+<summary>1.2.0 — Six HUD slots, individual sizes, clocks, weight and transparency / Шесть слотов, индивидуальные размеры, часы, вес и прозрачность</summary>
+
+### English
+
+Changes since **1.1.1**; consolidates the unpublished local test builds.
+
+- Added **Slot 5 and Slot 6** below Slot 4: two upper and four lower slots, with new slots empty by default. Existing choices are preserved; empty rows collapse and the zoom popup stays below the last filled row.
+- Each slot has its own **size, 25–400%, default 100%**, including biome text and the wind arrow. All text contents share the native biome font size at 100%; coordinates are no longer smaller by default. Wind scales from its native size; outline widths are unchanged. Sizes persist across content changes; both presets reset them to 100%. Row heights follow the text metrics or scaled wind diagonal.
+- Compact StoreAndCraft slot rows combine content selection and size on one line with a short label and no per-slot description. Narrow windows use two compact lines. Native Save/Cancel and input widgets are retained; other mods are not changed.
+- Added **In-game time**, **Real time** and **Weight** to all six HUD slots. In-game solar time follows the game's day/night cycle and sleep transitions; real time shows the computer's local clock, both in **HH:mm**. Weight shows **current / maximum**, rounded up like the native inventory and including the current carry-capacity bonuses. All three use white text with a 2-pixel outline. Existing slot-content defaults remain unchanged; saved `Time` selections remain the in-game clock.
+- Added **Map appearance → Map transparency (%)**, **0–100**, default **0%** (opaque). Only the minimap terrain/background fades; icons, border, compass, slot labels and the large map are unchanged. Both presets restore 0%.
+- At 1–99% transparency, terrain is rendered separately with the game's shader and composited with UI alpha. At 100%, terrain is hidden without running that pass. At 0%, the original rendering path is retained and the extra resources are released.
+- If transparency rendering fails, the background falls back to opaque without disabling the other mod features or changing the saved setting. One warning per failure; no per-frame retries. Save 0%, then the desired value to retry. Partial setup is cleaned up too.
+- The seven settings sections now contain **39 entries**. Existing saved settings and local-test slot sizes are preserved; new size entries start at 100%. Plugin ID, DLL/config names and client-only installation are unchanged.
+- Updated RU/EN documentation and settings, automated clock/weight/opacity, fallback, six-slot layout and size checks, and the in-game checklist. Automated tests do not verify Unity rendering or input.
+
+### Русский
+
+Изменения относительно **1.1.1**; объединены неопубликованные локальные тестовые сборки.
+
+- Добавлены **Slot 5 и Slot 6** ниже Slot 4: два верхних и четыре нижних слота, новые по умолчанию пустые. Прежние значения сохраняются; пустые строки схлопываются, индикатор зума остаётся ниже последней заполненной строки.
+- У каждого слота свой **размер 25–400%, по умолчанию 100%**, включая биом и стрелку ветра. При 100% все тексты имеют штатный размер шрифта биома; координаты больше не уменьшены по умолчанию. Ветер масштабируется от штатного размера; толщина обводок не меняется. Размеры сохраняются при смене содержимого; оба пресета возвращают 100%. Высота строк учитывает метрики текста или диагональ увеличенной стрелки.
+- В StoreAndCraft содержимое слота и размер объединены в одну компактную строку: короткая подпись, без описания под каждым слотом. На узком окне — две компактные строки. Штатные элементы управления и Save/Cancel сохранены; другие моды не затронуты.
+- Во все шесть слотов добавлены **«Игровое время»**, **«Реальное время»** и **«Вес»**. Игровые солнечные часы следуют за циклом дня/ночи и переходом ко сну/утру; реальные показывают местное время компьютера, оба варианта — **HH:mm**. Вес — **текущий / максимальный**, с округлением вверх как в инвентаре и учётом действующих бонусов к переносимому весу. Белый текст с обводкой 2 пикселя. Содержимое прежних слотов по умолчанию не изменено; сохранённое значение `Time` остаётся игровыми часами.
+- Добавлено **«Вид карты → Прозрачность карты»**, **0–100%**, по умолчанию **0%** (непрозрачная). Меняется только фон мини-карты; значки, рамка, компас, подписи слотов и большая карта сохраняют свой вид. Оба пресета возвращают 0%.
+- При прозрачности 1–99% фон отрисовывается штатным шейдером в отдельную текстуру, затем накладывается с нужной прозрачностью. При 100% фон скрыт без этого прохода отрисовки. При 0% используется прежняя отрисовка, дополнительные ресурсы освобождаются.
+- При ошибке отрисовки прозрачности возвращается непрозрачный фон, остальные функции продолжают работать, сохранённая настройка не меняется. Одно предупреждение при сбое, без повторных попыток каждый кадр. Для повтора сохраните 0%, затем нужное значение. Частично созданные ресурсы также освобождаются.
+- В семи разделах теперь **39 настроек**. Сохранённые значения и размеры слотов из локальных тестовых сборок сохраняются; новые настройки размера получают 100%. ID плагина, имена DLL/конфига и установка только на клиент не изменены.
+- Обновлены RU/EN-документация и настройки, автотесты часов/веса/прозрачности, обработки сбоев, раскладки шести слотов и размеров, а также ручной checklist. Автотесты не проверяют отрисовку и ввод Unity.
+
+</details>
+
 ## 1.1.1
 
 Changes since 1.1.0; consolidates the unpublished local test builds.
