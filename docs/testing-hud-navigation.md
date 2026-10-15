@@ -2,7 +2,7 @@
 
 Automated math tests and a successful DLL build do **not** verify Unity rendering/input. Run this checklist in an installed client before release. No server installation is needed.
 
-Current target: **1.2.0**, including all unpublished changes since **1.1.1**. Test a fresh profile, an upgrade from public 1.1.1 and an upgrade from the local 1.1.2 test builds; use copied configs, not the only copy of a live profile. The steps below are a checklist, not a record of completed in-game tests.
+Current target: **1.2.1**, a documentation-only update with the same behavior as **1.2.0**. The checks below cover the features introduced since **1.1.1**. Test a fresh profile, an upgrade from public 1.1.1/1.2.0 and an upgrade from the local 1.1.2 test builds; use copied configs, not the only copy of a live profile. The steps below are a checklist, not a record of completed in-game tests.
 
 Font-size references below assume each slot's size is 100%, unless specified otherwise. All text contents now share the native biome font size at 100%; wind uses its native size.
 

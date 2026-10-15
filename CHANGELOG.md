@@ -1,6 +1,25 @@
 # Changelog
 
 <details>
+<summary>1.2.1 — Documentation refresh / Обновление документации</summary>
+
+### English
+
+- Moved the screenshot above a single Changelog section, with a separate collapsed block for every version in each language.
+- Shortened the English/Russian README, especially settings and HUD/navigation: only essential defaults and controls remain.
+- Moved build/test instructions to `docs/building.md`; preserved the complete release history in this file.
+- Documentation-only update since **1.2.0**. Mod behavior, defaults and saved settings are unchanged; the version bump delivers the revised README in the Thunderstore package.
+
+### Русский
+
+- Скриншот перенесён выше единого раздела Changelog; каждая версия — отдельный свёрнутый блок в обоих языках.
+- Сокращён README RU/EN, особенно настройки и HUD/навигация: оставлены основные значения по умолчанию и управление.
+- Инструкции сборки/тестирования вынесены в `docs/building.md`; полная история релизов сохранена в этом файле.
+- Только документация относительно **1.2.0**. Поведение мода, дефолты и сохранённые настройки не изменены; новый номер нужен для доставки обновлённого README в пакете Thunderstore.
+
+</details>
+
+<details>
 <summary>1.2.0 — Six HUD slots, individual sizes, clocks, weight and transparency / Шесть слотов, индивидуальные размеры, часы, вес и прозрачность</summary>
 
 ### English

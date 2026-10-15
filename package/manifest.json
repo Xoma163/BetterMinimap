@@ -1,6 +1,6 @@
 {
   "name": "BetterMinimap",
-  "version_number": "1.2.0",
+  "version_number": "1.2.1",
   "website_url": "https://github.com/Xoma163/BetterMinimap",
   "description": "Rotating minimap with smooth zoom, customizable shape, size and transparency. Six HUD slots for clocks, carry weight and coordinates, plus waypoints and transport icons. Client-side, English/Russian settings.",
   "dependencies": [

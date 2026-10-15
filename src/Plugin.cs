@@ -18,7 +18,7 @@ public enum WindPosition { Vanilla, TopLeft, TopRight, BottomLeft, BottomRight, 
 public enum CompassLineType { Dashed, Solid }
 public enum MapLighting { TimeOfDay, Day, Night }
 
-[BepInPlugin(Id, "Better Minimap", "1.2.0")]
+[BepInPlugin(Id, "Better Minimap", "1.2.1")]
 [BepInProcess("valheim.exe")]
 [BepInDependency("com.morda.storeandcraft", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
